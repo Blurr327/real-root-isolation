@@ -6,12 +6,13 @@
 #include <flint/flint.h>
 #include <flint/fmpq.h>
 
+//#define DEBUG 0
 
 int count_sign_variations(fmpz_poly_t poly) {
     slong degree = fmpz_poly_degree(poly);
 
     int var = 0;
-    for (int i = 0; i < degree-1; i++) {
+    for (int i = 0; i < degree; i++) {
         int s0 = fmpz_sgn(fmpz_poly_get_coeff_ptr(poly, i));
         int s1 = fmpz_sgn(fmpz_poly_get_coeff_ptr(poly, i+1));
         /*
@@ -27,57 +28,67 @@ int count_sign_variations(fmpz_poly_t poly) {
 
 void reverse_coeffs(fmpz_poly_t outPoly, fmpz_poly_t poly) {
     slong degree = fmpz_poly_degree(poly);
-    fmpz_t *oldCoeffs = malloc(degree * sizeof(fmpz_t));
-    for (int i = 0; i < degree; i++) {
+    fmpz_t *oldCoeffs = malloc((degree+1) * sizeof(fmpz_t));
+    for (int i = 0; i < degree + 1; i++) {
         fmpz_poly_get_coeff_fmpz(oldCoeffs[i], poly, i);
     }
-    for (int i = 0; i < degree; i++) {
-        fmpz_poly_set_coeff_fmpz(outPoly, i, oldCoeffs[degree-i]);
+    for (int i = 0; i < degree + 1; i++) {
+        fmpz_poly_set_coeff_fmpz(outPoly, i, oldCoeffs[degree + 1 -i]);
     }
     free(oldCoeffs);
 }
 
-void shift_in_proportions_by_k(fmpz_poly_t poly, int k) {
+void shift_in_proportions_by_k(fmpz_poly_t outPoly, fmpz_poly_t poly, int k) {
     slong degree = fmpz_poly_degree(poly);
+    if (k == 0) {
+        return;
+    }
+
     int direction = (k > 0) ? 1 : 0;
+    k = abs(k);
     if (direction) {
         for (int i = 0; i < degree + 1; i++) {
             fmpz_t c;
             fmpz_poly_get_coeff_fmpz(c, poly, i);
+            /*
             printf("k = %d | i = %d |", k, i);
             fmpz_print(c);
-            printf(" * %d = ", 1 << (k*i));
+            printf(" * %lu = ", 1l << (k*i));
+            */
             fmpz_mul_2exp(c, c, k*i);
+            /*
             fmpz_print(c);
             printf("\n");
-
-            fmpz_poly_set_coeff_fmpz(poly, i, c);
+            */
+            fmpz_poly_set_coeff_fmpz(outPoly, i, c);
         }
     } else {
         for (int i = 0; i < degree + 1; i++) {
+            fmpz_t c;
+            fmpz_poly_get_coeff_fmpz(c, poly, i);
             /*
-            fmpz_t c;
-            fmpz_poly_get_coeff_fmpz(c, poly, i);
-            fmpz_fdiv_q_2exp(c, c, k*i);
-            fmpz_poly_set_coeff_fmpz(poly, i, c);
-            */
-            fmpz_t c;
-            fmpz_poly_get_coeff_fmpz(c, poly, i);
             printf("k = %d | i = %d |", k, i);
             fmpz_print(c);
-            printf(" * %d = ", 1 << (k*i));
+            printf(" / %lu = ", 1l << (k*i));
+            */
             fmpz_fdiv_q_2exp(c, c, k*i);
+            /*
             fmpz_print(c);
             printf("\n");
-
-            fmpz_poly_set_coeff_fmpz(poly, i, c);
+            */
+            fmpz_poly_set_coeff_fmpz(outPoly, i, c);
         }
     }
 }
 
 void cauchy_bound(fmpq_t bound, fmpz_poly_t poly) {
+    if (fmpz_poly_is_zero(poly)) {
+        fmpq_zero(bound);
+        return;
+    }
     slong degree = fmpz_poly_degree(poly);
     fmpz_t currMax;
+    fmpz_init(currMax);
     fmpz_poly_get_coeff_fmpz(currMax, poly, 0);
     fmpz_abs(currMax, currMax);
     for (int i = 0; i < degree; i++) {
@@ -104,6 +115,7 @@ void cauchy_bound(fmpq_t bound, fmpz_poly_t poly) {
     fmpq_div_fmpz(bound, currMaxQ, maxDegreeCoeff);
     //fmpq_div_fmpz(bound, currMax, bound);
     fmpq_add_si(bound, bound, 1);
+    fmpz_clear(currMax);
 }
 
 

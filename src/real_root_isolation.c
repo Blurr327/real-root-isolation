@@ -7,6 +7,7 @@
 #include <sys/random.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include "../include/poly_utils.h"
 
 double wtime() {
   struct timeval timecheck;
@@ -35,12 +36,13 @@ void test_flint_taylor_shift() {
   for (int j = 0; j < nb_points; j++) {
     degree = 15 + j;
     for (int k = 0; k < nb_points; k++) {
-      tau = 1000 + k*100;
+      tau = 1000 + k*10;
       // generate N random polynomials and time the flint taylor shift function
       double sum_durations = 0;
 
       for (int i = 0; i < N; i++) {
-        fmpz_poly_randtest(p, r, degree + 1, tau);
+        //fmpz_poly_randtest(p, r, degree + 1, tau);
+        random_dense_fmpz_poly(p, r, degree, tau);
         double start = wtime();
         fmpz_poly_taylor_shift_divconquer(o, p, c);
         double end = wtime();
@@ -80,5 +82,5 @@ void test_flint_taylor_shift() {
 
 
 int main() {
-  //test_flint_taylor_shift();
+  test_flint_taylor_shift();
   }
