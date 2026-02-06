@@ -4,6 +4,7 @@
 #include "../include/poly_utils.h"
 #include <flint/fmpz.h>
 #include <flint/flint.h>
+#include <flint/fmpq.h>
 
 
 int count_sign_variations(fmpz_poly_t poly) {
@@ -11,9 +12,13 @@ int count_sign_variations(fmpz_poly_t poly) {
 
     int var = 0;
     for (int i = 0; i < degree-1; i++) {
+        int s0 = fmpz_sgn(fmpz_poly_get_coeff_ptr(poly, i));
+        int s1 = fmpz_sgn(fmpz_poly_get_coeff_ptr(poly, i+1));
+        /*
         slong c0 = fmpz_poly_get_coeff_si(poly, i);
         slong c1 = fmpz_poly_get_coeff_si(poly, i+1);
-        if (c0 * c1 < 0) {
+        */
+        if (s0 * s1 < 0) {
             var++;
         }
     }
@@ -36,40 +41,69 @@ void shift_in_proportions_by_k(fmpz_poly_t poly, int k) {
     slong degree = fmpz_poly_degree(poly);
     int direction = (k > 0) ? 1 : 0;
     if (direction) {
-        for (int i = 0; i < degree; i++) {
+        for (int i = 0; i < degree + 1; i++) {
             fmpz_t c;
             fmpz_poly_get_coeff_fmpz(c, poly, i);
+            printf("k = %d | i = %d |", k, i);
+            fmpz_print(c);
+            printf(" * %d = ", 1 << (k*i));
             fmpz_mul_2exp(c, c, k*i);
+            fmpz_print(c);
+            printf("\n");
+
             fmpz_poly_set_coeff_fmpz(poly, i, c);
         }
     } else {
-        for (int i = 0; i < degree; i++) {
+        for (int i = 0; i < degree + 1; i++) {
+            /*
             fmpz_t c;
             fmpz_poly_get_coeff_fmpz(c, poly, i);
             fmpz_fdiv_q_2exp(c, c, k*i);
+            fmpz_poly_set_coeff_fmpz(poly, i, c);
+            */
+            fmpz_t c;
+            fmpz_poly_get_coeff_fmpz(c, poly, i);
+            printf("k = %d | i = %d |", k, i);
+            fmpz_print(c);
+            printf(" * %d = ", 1 << (k*i));
+            fmpz_fdiv_q_2exp(c, c, k*i);
+            fmpz_print(c);
+            printf("\n");
+
             fmpz_poly_set_coeff_fmpz(poly, i, c);
         }
     }
 }
 
-void cauchy_bound(fmpz_t bound, fmpz_poly_t poly) {
+void cauchy_bound(fmpq_t bound, fmpz_poly_t poly) {
     slong degree = fmpz_poly_degree(poly);
-    fmpz_t *coeffs = malloc(degree * sizeof(fmpz_t));
+    fmpz_t currMax;
+    fmpz_poly_get_coeff_fmpz(currMax, poly, 0);
+    fmpz_abs(currMax, currMax);
     for (int i = 0; i < degree; i++) {
-        fmpz_poly_get_coeff_fmpz(coeffs[i], poly, i);
-    }
-    fmpz_t currMin;
-    fmpz_poly_get_coeff_fmpz(currMin, poly, 0);
-    for (int i = 0; i < degree-1; i++) {
         fmpz_t tmp;
         fmpz_poly_get_coeff_fmpz(tmp, poly, i);
-        if (fmpz_cmp(currMin, tmp) < 0) {
-            fmpz_set(currMin, tmp);
+        fmpz_abs(tmp, tmp);
+        //printf("current evaluated coeff: %d: ", i);
+        //fmpz_print(tmp);
+        //printf("\n");
+        if (fmpz_cmp(currMax, tmp) < 0) {
+            fmpz_set(currMax, tmp);
         }
     }
-    fmpz_poly_get_coeff_fmpz(bound, poly, degree);
-    fmpz_fdiv_q_ui(bound, bound, *currMin);
-    fmpz_add_si(bound, bound, 1);
+    //fmpz_t maxDegreeCoeff = fmpz_poly_lead(poly);
+    fmpz_t maxDegreeCoeff;
+    fmpz_poly_get_coeff_fmpz(maxDegreeCoeff, poly, degree);
+
+    fmpz_abs(maxDegreeCoeff, maxDegreeCoeff);
+
+    fmpq_t currMaxQ;
+    fmpz_t one;
+    fmpz_one(one);
+    fmpq_set_fmpz_frac(currMaxQ, currMax, one);
+    fmpq_div_fmpz(bound, currMaxQ, maxDegreeCoeff);
+    //fmpq_div_fmpz(bound, currMax, bound);
+    fmpq_add_si(bound, bound, 1);
 }
 
 
@@ -95,33 +129,27 @@ void random_dense_fmpz_poly(fmpz_poly_t poly, flint_rand_t state, slong deg, fli
         return;
     }
 
-    /* Allocate space for deg+1 coefficients (dense) */
-    fmpz_poly_fit_length(poly, deg + 1);
+    fmpz_t temp_coeff;
+    fmpz_init(temp_coeff);
 
-    /* Fill all coefficients randomly */
+    /* Fill all coefficients */
     for (slong i = 0; i <= deg; i++)
     {
-        /* Random signed integer with up to `bits` bits */
-        fmpz_randbits(fmpz_poly_get_coeff_ptr(poly, i), state, bits);
+        fmpz_randbits(temp_coeff, state, bits);
 
-        /* Randomize sign */
         if (n_randint(state, 2))
-            fmpz_neg(fmpz_poly_get_coeff_ptr(poly, i), fmpz_poly_get_coeff_ptr(poly, i));
+            fmpz_neg(temp_coeff, temp_coeff);
+
+        /* Ensure leading coefficient is nonzero for exact degree */
+        if (i == deg && fmpz_is_zero(temp_coeff))
+        {
+            fmpz_set_si(temp_coeff, (n_randint(state, 2) ? 1 : -1));
+        }
+
+        /* This is the safe way to set coefficients */
+        fmpz_poly_set_coeff_fmpz(poly, i, temp_coeff);
     }
 
-    /* Ensure leading coefficient is nonzero so degree is exactly `deg` */
-    if (fmpz_is_zero(fmpz_poly_get_coeff_ptr(poly, deg)))
-    {
-        /* Set to 1 (or -1) deterministically from RNG */
-        fmpz_set_ui(fmpz_poly_get_coeff_ptr(poly, deg), 1);
-        if (n_randint(state, 2))
-            fmpz_neg(fmpz_poly_get_coeff_ptr(poly, deg), fmpz_poly_get_coeff_ptr(poly, deg));
-    }
-
-    /* Normalize internal length/degree */
-    _fmpz_poly_set_length(poly, deg + 1);
-    _fmpz_poly_normalise(poly);
+    fmpz_clear(temp_coeff);
 }
-
-
 
