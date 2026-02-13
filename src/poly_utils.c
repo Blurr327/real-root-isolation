@@ -66,16 +66,7 @@ void shift_in_proportions_by_k(fmpz_poly_t outPoly, fmpz_poly_t poly, int k) {
   for (int i = 0; i < degree + 1; i++) {
     fmpz_t c;
     fmpz_poly_get_coeff_fmpz(c, poly, i);
-    /*
-    printf("k = %d | i = %d |", k, i);
-    fmpz_print(c);
-    printf(" * %lu = ", 1l << (k*i));
-    */
     fmpz_mul_2exp(c, c, a + b * (k * i));
-    /*
-    fmpz_print(c);
-    printf("\n");
-    */
     fmpz_poly_set_coeff_fmpz(outPoly, i, c);
   }
 

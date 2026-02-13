@@ -4,8 +4,8 @@
 #include <flint/fmpz_poly.h>
 #include <gmp.h>
 
-// is expected to be of size at least 2*deg(P)
-int subdiv_algo_ext(fmpz_poly_t in_poly, float sol[], float start, float end,
+// sol is expected to be of size at least 2*deg(P)
+int subdiv_algo_ext(fmpz_poly_t in_poly, double sol[], double start, double end,
                     int *next_index_p) {
   fmpz_t tmp;
   fmpz_poly_t tmp_poly;
@@ -23,8 +23,6 @@ int subdiv_algo_ext(fmpz_poly_t in_poly, float sol[], float start, float end,
 
   // base case
   int c = count_sign_variations(tmp_poly);
-
-  printf("found %d variations in : [%f,%f]\n", c, start, end);
 
   if (c == 1) {
     sol[*next_index_p] = start;
@@ -61,3 +59,4 @@ int subdiv_algo_ext(fmpz_poly_t in_poly, float sol[], float start, float end,
 
   return (c % 2);
 }
+
