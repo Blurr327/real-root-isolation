@@ -59,4 +59,3 @@ int subdiv_algo_ext(fmpz_poly_t in_poly, double sol[], double start, double end,
 
   return (c % 2);
 }
-
