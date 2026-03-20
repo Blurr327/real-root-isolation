@@ -10,6 +10,8 @@
 
 // is expected to be of size at least 2 deg(P)
 int subdiv_algo_ext(fmpz_poly_t in_poly, double sol[], double start, double end,
-                    int *next_index_p);
+                    int *next_index_p, fmpz_t tmp, fmpz_poly_t tmp_poly);
+
+void subdiv_algo(fmpz_poly_t in_poly, double sol[]);
 
 #endif // RRI_ALGO_H
