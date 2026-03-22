@@ -9,9 +9,9 @@
 #include <gmp.h>
 
 // is expected to be of size at least 2 deg(P)
-int subdiv_algo_ext(fmpz_poly_t in_poly, double sol[], double start, double end,
-                    int *next_index_p, fmpz_t tmp, fmpz_poly_t tmp_poly);
+int subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_t sol[], fmpq_t start, fmpq_t end,
+                    ulong *next_index_p);
 
-void subdiv_algo(fmpz_poly_t in_poly, double sol[]);
+void subdiv_algo(fmpz_poly_t in_poly, fmpq_t sol[], ulong *next_index_p);
 
 #endif // RRI_ALGO_H

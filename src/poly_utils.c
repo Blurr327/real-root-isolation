@@ -35,8 +35,6 @@ void reverse_coeffs(fmpz_poly_t out, fmpz_poly_t poly) {
     return;
   }
 
-  // Ensure out has enough length
-  fmpz_poly_fit_length(out, deg + 1);
   fmpz_poly_zero(out);
 
   fmpz_t c;
@@ -48,10 +46,11 @@ void reverse_coeffs(fmpz_poly_t out, fmpz_poly_t poly) {
   }
 
   fmpz_clear(c);
-  _fmpz_poly_normalise(out);
 }
 
 void shift_in_proportions_by_k(fmpz_poly_t outPoly, fmpz_poly_t poly, int k) {
+  fmpz_t c;
+  fmpz_init(c);
   slong degree = fmpz_poly_degree(poly);
   if (k == 0) {
     return;
@@ -64,13 +63,11 @@ void shift_in_proportions_by_k(fmpz_poly_t outPoly, fmpz_poly_t poly, int k) {
   int b = (direction) ? 1 : (-1);
 
   for (int i = 0; i < degree + 1; i++) {
-    fmpz_t c;
     fmpz_poly_get_coeff_fmpz(c, poly, i);
     fmpz_mul_2exp(c, c, a + b * (k * i));
     fmpz_poly_set_coeff_fmpz(outPoly, i, c);
   }
-
-  _fmpz_poly_normalise(outPoly);
+  fmpz_clear(c);
 }
 
 void cauchy_bound(fmpq_t bound, fmpz_poly_t poly) {
@@ -110,21 +107,6 @@ void cauchy_bound(fmpq_t bound, fmpz_poly_t poly) {
   fmpz_clear(currMax);
 }
 
-/**
-  Random dense FLINT integer polynomials (fmpz_poly_t)
-
-  - Generates a dense polynomial of EXACT degree `deg` (i.e., leading coeff ≠ 0)
-  - Coefficients are random signed integers with up to `bits` bits (roughly
-  uniform)
-  - Requires FLINT headers and linking with -lflint (and dependencies)
-
-  Example usage:
-    flint_rand_t state; flint_randinit(state);
-    fmpz_poly_t f; fmpz_poly_init(f);
-    random_dense_fmpz_poly(f, state, 20, 64);   // deg=20, 64-bit-ish coeffs
-    fmpz_poly_print(f); printf("\n");
-    fmpz_poly_clear(f); flint_randclear(state);
-*/
 void random_dense_fmpz_poly(fmpz_poly_t poly, flint_rand_t state, slong deg,
                             flint_bitcnt_t bits) {
   if (deg < 0) {
@@ -152,4 +134,23 @@ void random_dense_fmpz_poly(fmpz_poly_t poly, flint_rand_t state, slong deg,
   }
 
   fmpz_clear(temp_coeff);
+}
+
+slong fmpq_clog(fmpq_t n, int b) {
+  slong b1 = fmpz_clog_ui(fmpq_numref(n), b);
+  slong b2 = fmpz_flog_ui(fmpq_denref(n), b);
+  return b1 - b2;
+}
+
+void neg_varchange(fmpz_poly_t out_poly, fmpz_poly_t in_poly) {
+  fmpz_t c;
+  fmpz_init(c);
+  slong degree = fmpz_poly_degree(in_poly);
+  for (int i = 0; i < degree + 1; i++) {
+    fmpz_poly_get_coeff_fmpz(c, in_poly, i);
+    if ((i % 2) == 1)
+      fmpz_mul_si(c, c, -1);
+    fmpz_poly_set_coeff_fmpz(out_poly, i, c);
+  }
+  fmpz_clear(c);
 }

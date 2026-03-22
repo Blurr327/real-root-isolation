@@ -5,9 +5,17 @@
 #include <gmp.h>
 
 // sol is expected to be of size at least 2*deg(P)
-int subdiv_algo_ext(fmpz_poly_t in_poly, double sol[], double start, double end,
-                    int *next_index_p, fmpz_t tmp, fmpz_poly_t tmp_poly) {
+int subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_t sol[], fmpq_t start, fmpq_t end,
+                    ulong *next_index_p) {
+  fmpz_t tmp;
+  fmpq_t mid;
+  fmpz_poly_t tmp_poly;
   int next_index = *next_index_p;
+
+  // initializations
+  fmpq_init(mid);
+  fmpz_init_set_ui(tmp, 1);
+  fmpz_poly_init2(tmp_poly, fmpz_poly_degree(in_poly) + 1);
 
   // x = 1/(y + 1) ; roots in ]0, 1[ -> roots in ]0, +inf[
   // x -> 1/x
@@ -19,20 +27,20 @@ int subdiv_algo_ext(fmpz_poly_t in_poly, double sol[], double start, double end,
   int c = count_sign_variations(tmp_poly);
 
   if (c == 1) {
-    sol[*next_index_p] = start;
-    sol[*next_index_p + 1] = end;
+    fmpq_set(sol[*next_index_p], start);
+    fmpq_set(sol[*next_index_p + 1], end);
     *next_index_p += 2;
   }
 
   if (c == 1 || c == 0)
-    return c;
+    goto cleanup;
 
-  float mid = (start + end) / 2.0;
+  fmpq_add(mid, start, end);  // mid = start + end
+  fmpq_div_2exp(mid, mid, 1); // mid = mid /2
   // x = (1/2) * y variable change ; roots in ]0, 1/2[ -> roots in ]0, 1[
   shift_in_proportions_by_k(tmp_poly, in_poly, -1);
 
-  int n1 =
-      subdiv_algo_ext(tmp_poly, sol, start, mid, next_index_p, tmp, tmp_poly);
+  int n1 = subdiv_algo_ext(tmp_poly, sol, start, mid, next_index_p); // UNCOMENT
 
   // x = (y + 1)/2 variable change ; roots in ]1/2, 1[ -> roots in ]0, 1[
   // x -> x / 2
@@ -40,51 +48,65 @@ int subdiv_algo_ext(fmpz_poly_t in_poly, double sol[], double start, double end,
   // x -> x + 1
   fmpz_poly_taylor_shift(tmp_poly, tmp_poly, tmp);
 
-  int n2 =
-      subdiv_algo_ext(tmp_poly, sol, mid, end, next_index_p, tmp, tmp_poly);
+  int n2 = subdiv_algo_ext(tmp_poly, sol, mid, end, next_index_p); // UNCOMENT
 
   // checking if 1/2 is a root
-  if (((n1 + n2) % 2) != (c % 2)) {
-    sol[*next_index_p] = mid;
-    sol[*next_index_p + 1] = mid;
+  if (((n1 + n2) % 2) != (c % 2)) { // UNCOMENT
+    fmpq_set(sol[*next_index_p], mid);
+    fmpq_set(sol[*next_index_p + 1], mid);
     *next_index_p += 2;
   }
+
+cleanup:
+  fmpz_clear(tmp);
+  fmpq_clear(mid);
+  fmpz_poly_clear(tmp_poly);
 
   return (c % 2);
 }
 
-void normalize_polyposroots(fmpz_poly_t out_poly, fmpz_poly_t in_poly) {
-  fmpq_t bound;
-  fmpq_init(bound);
-  cauchy_bound(bound, in_poly);
+void normalize_polyposroots(fmpz_poly_t out_poly, fmpz_poly_t in_poly,
+                            fmpq_t bound) {
   // closest 2^b to the bound
-  int b = mpq_clog(bound,
-                   2); // FIXME : implement function or find an implementation
+  int b = fmpq_clog(bound, 2);
+
+  printf("bound : ");
+  fmpq_print(bound);
+  printf("\n");
+
   // normalize polynomial via variable change ]0;2^b[ => ]0;1[
   shift_in_proportions_by_k(out_poly, in_poly, b);
-  fmpq_clear(bound);
 }
 
-void subdiv_algo(fmpz_poly_t in_poly, double sol[]) {
-  fmpz_t tmp;
-  fmpz_poly_t tmp_poly;
-  int b;
+void subdiv_algo(fmpz_poly_t in_poly, fmpq_t sol[], ulong *next_index_p) {
+  fmpq_t bound;
+  fmpq_t start, end;
 
-  fmpz_init_set_ui(tmp, 1);
-  fmpz_poly_init(tmp_poly);
+  fmpq_init(bound);
+  cauchy_bound(bound, in_poly);
+  fmpq_init(start);
+  fmpq_init(end);
 
-  normalize_polyposroots(in_poly, in_poly);
+  // roots in [0, bound] -> [0, 1]
+  normalize_polyposroots(in_poly, in_poly, bound);
 
+  // search in [0, bound]
+  fmpq_set_ui(start, 0, 1);
+  fmpq_set(end, bound);
+  // FINDING POSITIVE ROOTS
   // execute subdiv_algo_ext
-  int next_index = 0;
-  subdiv_algo_ext(in_poly, sol, 0, 1, &next_index, tmp, tmp_poly);
+  subdiv_algo_ext(in_poly, sol, start, end, next_index_p);
 
   // FINDING NEGATIVE ROOTS
   // x -> -x variable change
-  neg_varchange(in_poly,
-                in_poly); // FIXME : implement or find implementation in docs
-  subdiv_algo_ext(in_poly, sol, 0, 1, &next_index, tmp, tmp_poly);
+  neg_varchange(in_poly, in_poly);
+  // search in [-bound, 0]
+  fmpq_mul_si(bound, bound, -1);
+  fmpq_set(start, bound);
+  fmpq_set_ui(end, 0, 1);
+  subdiv_algo_ext(in_poly, sol, start, end, next_index_p);
 
-  fmpz_clear(tmp);
-  fmpz_poly_clear(tmp_poly);
+  fmpq_clear(start);
+  fmpq_clear(end);
+  fmpq_clear(bound);
 }
