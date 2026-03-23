@@ -52,7 +52,6 @@ int subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_t sol[], fmpq_t start, fmpq_t end,
 
   // checking if 1/2 is a root
   if (((n1 + n2) % 2) != (c % 2)) {
-    printf("huh\n");
     fmpq_set(sol[*next_index_p], mid);
     fmpq_set(sol[*next_index_p + 1], mid);
     *next_index_p += 2;
@@ -94,19 +93,20 @@ void subdiv_algo(fmpz_poly_t in_poly, fmpq_t sol[], ulong *next_index_p) {
 
   // search in [0, bound]
   fmpq_set_ui(start, 0, 1);
-  fmpq_set(end, bound);
+  fmpq_set_ui(end, 1, 1);
   // FINDING POSITIVE ROOTS
   // execute subdiv_algo_ext
   subdiv_algo_ext(tmp_poly, sol, start, end, next_index_p);
-
   // FINDING NEGATIVE ROOTS
   // x -> -x variable change
-  neg_varchange(tmp_poly, in_poly);
+  neg_varchange(tmp_poly, tmp_poly);
   // search in [-bound, 0]
-  fmpq_mul_si(bound, bound, -1);
-  fmpq_set(start, bound);
-  fmpq_set_ui(end, 0, 1);
+  fmpq_set_si(start, -1, 1);
+  fmpq_set_si(end, 0, 1);
   subdiv_algo_ext(tmp_poly, sol, start, end, next_index_p);
+
+  for (int i = 0; i < *next_index_p; i++)
+    fmpq_mul(sol[i], sol[i], bound);
 
   fmpq_clear(start);
   fmpq_clear(end);
