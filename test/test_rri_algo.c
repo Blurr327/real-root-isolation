@@ -8,9 +8,9 @@ void test_root_isolation_intervals(fmpz_poly_t test_poly, ulong degree,
                                    fmpq_t *sol, ulong length) {
   int verbose = 1;
   fmpq_t tmp;
-  fmpq_t *evals = malloc((2 * (degree) + 1) * sizeof(fmpq_t));
+  fmpq_t *evals = malloc((2 * (degree)) * sizeof(fmpq_t));
   fmpq_init(tmp);
-  for (int i = 0; i < (2 * degree) + 1; i++)
+  for (int i = 0; i < (2 * degree); i++)
     fmpq_init(evals[i]);
 
   for (int i = 0; i < length; i++) {
@@ -32,8 +32,8 @@ void test_root_isolation_intervals(fmpz_poly_t test_poly, ulong degree,
       }
     }
   }
-
-  for (int i = 0; i < (2 * degree) + 1; i++)
+  printf("test_root_isolation_intervals passed.\n");
+  for (int i = 0; i < (2 * degree); i++)
     fmpq_clear(evals[i]);
   free(evals);
   fmpq_clear(tmp);
@@ -42,9 +42,9 @@ void test_root_isolation_intervals(fmpz_poly_t test_poly, ulong degree,
 // test whether it detects all roots in ]0, 1[
 void test_subdiv_algo_ext(fmpz_poly_t test_poly, ulong degree) {
   int verbose = 1;
-  fmpq_t *sol = malloc((2 * (degree) + 1) * sizeof(fmpq_t));
+  fmpq_t *sol = malloc((2 * (degree)) * sizeof(fmpq_t));
   fmpq_t start, end;
-  for (int i = 0; i < (2 * degree) + 1; i++)
+  for (int i = 0; i < (2 * degree); i++)
     fmpq_init(sol[i]);
   fmpq_init(start);
   fmpq_init(end);
@@ -59,18 +59,17 @@ void test_subdiv_algo_ext(fmpz_poly_t test_poly, ulong degree) {
 
   test_root_isolation_intervals(test_poly, degree, sol, next_index);
 
-  printf("test_subdiv_algo_ext passed.\n");
   fmpq_clear(start);
   fmpq_clear(end);
-  for (int i = 0; i < (2 * degree) + 1; i++)
+  for (int i = 0; i < (2 * degree); i++)
     fmpq_clear(sol[i]);
   free(sol);
 }
 
 void test_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
   int verbose = 1;
-  fmpq_t *sol = malloc((2 * (degree) + 1) * sizeof(fmpq_t));
-  for (int i = 0; i < (2 * degree) + 1; i++)
+  fmpq_t *sol = malloc((2 * (degree)) * sizeof(fmpq_t));
+  for (int i = 0; i < (2 * degree); i++)
     fmpq_init(sol[i]);
 
   ulong next_index = 0;
@@ -80,16 +79,15 @@ void test_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
 
   test_root_isolation_intervals(test_poly, degree, sol, next_index);
 
-  printf("test_subdiv_algo passed.\n");
-  for (int i = 0; i < (2 * degree) + 1; i++)
+  for (int i = 0; i < (2 * degree); i++)
     fmpq_clear(sol[i]);
   free(sol);
 }
 
 int main() {
-  ulong degree = 1;
+  int random = 1;
   ulong bits = 8;
-  int random = 0;
+  ulong degree = 2;
   char test_poly_str[] = "3  3 -16 16";
 
   fmpz_poly_t test_poly;
@@ -109,8 +107,8 @@ int main() {
 
   printf("test subdiv ext \n");
   test_subdiv_algo_ext(test_poly, degree);
-  // printf("test subdiv \n");
-  // test_subdiv_algo(test_poly, degree);
+  printf("test subdiv \n");
+  test_subdiv_algo(test_poly, degree);
 
   fmpz_poly_clear(test_poly);
 }

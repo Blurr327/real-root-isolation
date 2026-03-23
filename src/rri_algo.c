@@ -19,7 +19,7 @@ int subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_t sol[], fmpq_t start, fmpq_t end,
 
   // x = 1/(y + 1) ; roots in ]0, 1[ -> roots in ]0, +inf[
   // x -> 1/x
-  reverse_coeffs(tmp_poly, in_poly);
+  fmpz_poly_reverse(tmp_poly, in_poly, fmpz_poly_degree(in_poly) + 1);
   // x -> x + 1
   fmpz_poly_taylor_shift(tmp_poly, tmp_poly, tmp);
 
@@ -40,7 +40,7 @@ int subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_t sol[], fmpq_t start, fmpq_t end,
   // x = (1/2) * y variable change ; roots in ]0, 1/2[ -> roots in ]0, 1[
   shift_in_proportions_by_k(tmp_poly, in_poly, -1);
 
-  int n1 = subdiv_algo_ext(tmp_poly, sol, start, mid, next_index_p); // UNCOMENT
+  int n1 = subdiv_algo_ext(tmp_poly, sol, start, mid, next_index_p);
 
   // x = (y + 1)/2 variable change ; roots in ]1/2, 1[ -> roots in ]0, 1[
   // x -> x / 2
@@ -48,10 +48,11 @@ int subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_t sol[], fmpq_t start, fmpq_t end,
   // x -> x + 1
   fmpz_poly_taylor_shift(tmp_poly, tmp_poly, tmp);
 
-  int n2 = subdiv_algo_ext(tmp_poly, sol, mid, end, next_index_p); // UNCOMENT
+  int n2 = subdiv_algo_ext(tmp_poly, sol, mid, end, next_index_p);
 
   // checking if 1/2 is a root
-  if (((n1 + n2) % 2) != (c % 2)) { // UNCOMENT
+  if (((n1 + n2) % 2) != (c % 2)) {
+    printf("huh\n");
     fmpq_set(sol[*next_index_p], mid);
     fmpq_set(sol[*next_index_p + 1], mid);
     *next_index_p += 2;
@@ -81,32 +82,34 @@ void normalize_polyposroots(fmpz_poly_t out_poly, fmpz_poly_t in_poly,
 void subdiv_algo(fmpz_poly_t in_poly, fmpq_t sol[], ulong *next_index_p) {
   fmpq_t bound;
   fmpq_t start, end;
-
+  fmpz_poly_t tmp_poly;
+  fmpz_poly_init(tmp_poly);
   fmpq_init(bound);
   cauchy_bound(bound, in_poly);
   fmpq_init(start);
   fmpq_init(end);
 
   // roots in [0, bound] -> [0, 1]
-  normalize_polyposroots(in_poly, in_poly, bound);
+  normalize_polyposroots(tmp_poly, in_poly, bound);
 
   // search in [0, bound]
   fmpq_set_ui(start, 0, 1);
   fmpq_set(end, bound);
   // FINDING POSITIVE ROOTS
   // execute subdiv_algo_ext
-  subdiv_algo_ext(in_poly, sol, start, end, next_index_p);
+  subdiv_algo_ext(tmp_poly, sol, start, end, next_index_p);
 
   // FINDING NEGATIVE ROOTS
   // x -> -x variable change
-  neg_varchange(in_poly, in_poly);
+  neg_varchange(tmp_poly, in_poly);
   // search in [-bound, 0]
   fmpq_mul_si(bound, bound, -1);
   fmpq_set(start, bound);
   fmpq_set_ui(end, 0, 1);
-  subdiv_algo_ext(in_poly, sol, start, end, next_index_p);
+  subdiv_algo_ext(tmp_poly, sol, start, end, next_index_p);
 
   fmpq_clear(start);
   fmpq_clear(end);
   fmpq_clear(bound);
+  fmpz_poly_clear(tmp_poly);
 }
