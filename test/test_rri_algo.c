@@ -85,10 +85,10 @@ void test_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
 }
 
 int main() {
-  int random = 0;
+  int random = 1;
   ulong bits = 8;
-  ulong degree = 2;
-  char test_poly_str[] = "3  -127 92 -16";
+  ulong degree = 10000;
+  char test_poly_str[] = "3  -1 -1 1";
 
   fmpz_poly_t test_poly;
   flint_rand_s randomio;
@@ -105,8 +105,10 @@ int main() {
   fmpz_poly_print(test_poly);
   printf("\n");
 
-  if (!fmpz_poly_is_squarefree(test_poly))
-    printf("Given polynomial is not square free.");
+  if (!fmpz_poly_is_squarefree(test_poly)) {
+    printf("Given polynomial is not square free.\n");
+    return 1;
+  }
 
   printf("test subdiv ext \n");
   test_subdiv_algo_ext(test_poly, degree);

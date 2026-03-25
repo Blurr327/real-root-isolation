@@ -1,5 +1,6 @@
 #include "../include/rri_algo.h"
 #include "../include/poly_utils.h"
+#include <flint/fmpq.h>
 #include <flint/fmpz.h>
 #include <flint/fmpz_poly.h>
 #include <gmp.h>
@@ -70,6 +71,10 @@ void normalize_polyposroots(fmpz_poly_t out_poly, fmpz_poly_t in_poly,
   // closest 2^b to the bound
   int b = fmpq_clog(bound, 2);
 
+  printf("b : ");
+  printf("%d", b);
+  printf("\n");
+
   printf("bound : ");
   fmpq_print(bound);
   printf("\n");
@@ -88,8 +93,10 @@ void subdiv_algo(fmpz_poly_t in_poly, fmpq_t sol[], ulong *next_index_p) {
   fmpq_init(start);
   fmpq_init(end);
 
+  int b = fmpq_clog(bound, 2);
+
   // roots in [0, bound] -> [0, 1]
-  normalize_polyposroots(tmp_poly, in_poly, bound);
+  shift_in_proportions_by_k(tmp_poly, in_poly, b);
 
   // search in [0, bound]
   fmpq_set_ui(start, 0, 1);
@@ -104,6 +111,12 @@ void subdiv_algo(fmpz_poly_t in_poly, fmpq_t sol[], ulong *next_index_p) {
   fmpq_set_si(start, -1, 1);
   fmpq_set_si(end, 0, 1);
   subdiv_algo_ext(tmp_poly, sol, start, end, next_index_p);
+
+  fmpq_set_ui(bound, 1, 1);
+  if (b > 0)
+    fmpq_mul_2exp(bound, bound, b);
+  else
+    fmpq_div_2exp(bound, bound, b);
 
   for (int i = 0; i < *next_index_p; i++)
     fmpq_mul(sol[i], sol[i], bound);
