@@ -12,7 +12,7 @@ int subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_t sol[], fmpq_t start, fmpq_t end,
   fmpq_t mid;
   fmpz_poly_t tmp_poly;
 
-  printf("CALL\n");
+  // printf("CALL\n");
 
   // initializations
   fmpq_init(mid);
@@ -25,15 +25,15 @@ int subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_t sol[], fmpq_t start, fmpq_t end,
   // x -> x + 1
   fmpz_poly_taylor_shift(tmp_poly, tmp_poly, tmp);
 
-  char *x = "x";
-  printf("tmp_poly : ");
-  fmpz_poly_print_pretty(tmp_poly, x);
-  printf("\n");
+  // char *x = "x";
+  // printf("tmp_poly : ");
+  // fmpz_poly_print_pretty(tmp_poly, x);
+  // printf("\n");
 
   // base case
   int c = count_sign_variations(tmp_poly);
 
-  printf("counting sign_variations of c : %d\n", c);
+  // printf("counting sign_variations of c : %d\n", c);
 
   if (c == 1) {
     fmpq_set(sol[*next_index_p], start);
@@ -102,14 +102,27 @@ void subdiv_algo(fmpz_poly_t in_poly, fmpq_t sol[], ulong *next_index_p) {
 
   cauchy_bound(bound, in_poly);
 
+  printf("INIT BOUND :");
+  fmpq_print(bound);
+  printf("\n");
+
   int b = fmpq_clog(bound, 2);
+  fmpq_set_ui(bound, 1, 1);
+  if (b > 0)
+    fmpq_mul_2exp(bound, bound, b);
+  else
+    fmpq_div_2exp(bound, bound, b);
+
+  printf("BOUND ROUNDED TO 2^b :");
+  fmpq_print(bound);
+  printf("\n");
 
   // roots in [0, bound] -> [0, 1]
   shift_in_proportions_by_k(tmp_poly, in_poly, b);
 
   // search in [0, bound]
   fmpq_set_ui(start, 0, 1);
-  fmpq_set_ui(end, 1, 1);
+  fmpq_set(end, bound);
   // FINDING POSITIVE ROOTS
   // execute subdiv_algo_ext
   subdiv_algo_ext(tmp_poly, sol, start, end, next_index_p);
@@ -117,18 +130,11 @@ void subdiv_algo(fmpz_poly_t in_poly, fmpq_t sol[], ulong *next_index_p) {
   // x -> -x variable change
   neg_varchange(tmp_poly, tmp_poly);
   // search in [-bound, 0]
-  fmpq_set_si(start, -1, 1);
+  fmpq_mul_si(bound, bound, -1);
+  fmpq_set(start, bound);
   fmpq_set_si(end, 0, 1);
+
   subdiv_algo_ext(tmp_poly, sol, start, end, next_index_p);
-
-  fmpq_set_ui(bound, 1, 1);
-  if (b > 0)
-    fmpq_mul_2exp(bound, bound, b);
-  else
-    fmpq_div_2exp(bound, bound, b);
-
-  for (int i = 0; i < *next_index_p; i++)
-    fmpq_mul(sol[i], sol[i], bound);
 
   fmpq_clear(start);
   fmpq_clear(end);

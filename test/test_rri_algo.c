@@ -25,14 +25,15 @@ int test_root_isolation_intervals(fmpz_poly_t test_poly, ulong degree,
       }
       fmpq_mul(tmp, evals[i - 1], evals[i]);
       if (fmpq_sgn(tmp) > 0) {
-        printf("test_root_isolation_intervals failed. Detected too many or no "
+        printf("\e[31mtest_root_isolation_intervals failed. Detected too many "
+               "or no "
                "roots in one "
-               "interval.\n");
+               "interval.\e[0m\n");
         return 0;
       }
     }
   }
-  printf("test_root_isolation_intervals passed.\n");
+  printf("\e[32mtest_root_isolation_intervals passed.\e[0m\n");
   for (int i = 0; i < (2 * degree); i++)
     fmpq_clear(evals[i]);
   free(evals);
@@ -100,14 +101,17 @@ int main() {
   flint_randseed(&randomio, time(NULL), time(NULL) + 2);
   fmpz_poly_init2(test_poly, degree + 1);
 
+  int number_of_tests = 10000;
   int t = 1;
-  while (t) {
+  while (t && (number_of_tests--)) {
+    printf("================== TEST NUMBER %d ===============\n",
+           number_of_tests + 1);
     if (random)
       fmpz_poly_randtest(test_poly, &randomio, degree + 1, bits);
     else
       fmpz_poly_set_str(test_poly, test_poly_str);
     char *x = "x";
-    printf("TEST POLY : ");
+    printf("==== TEST POLY ====> ");
     fmpz_poly_print_pretty(test_poly, x);
     printf("\n");
 
@@ -116,10 +120,10 @@ int main() {
       continue;
     }
 
-    printf("test subdiv ext \n");
-    t = test_subdiv_algo_ext(test_poly, degree);
-    // printf("test subdiv \n");
-    // t = test_subdiv_algo(test_poly, degree);
+    // printf("test subdiv ext \n");
+    // t = test_subdiv_algo_ext(test_poly, degree);
+    printf("= test subdiv =\n");
+    t = test_subdiv_algo(test_poly, degree);
   }
 
   fmpz_poly_clear(test_poly);

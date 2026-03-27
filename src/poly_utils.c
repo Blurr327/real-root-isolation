@@ -144,7 +144,7 @@ void neg_varchange(fmpz_poly_t out_poly, fmpz_poly_t in_poly) {
   fmpz_t c;
   fmpz_init(c);
   slong degree = fmpz_poly_degree(in_poly);
-  for (int i = 0; i < degree + 1; i++) {
+  for (int i = 0; i < (degree + 1); i++) {
     fmpz_poly_get_coeff_fmpz(c, in_poly, i);
     if ((i % 2) == 1)
       fmpz_mul_si(c, c, -1);
