@@ -11,12 +11,13 @@ int subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_t sol[], fmpq_t start, fmpq_t end,
   fmpz_t tmp;
   fmpq_t mid;
   fmpz_poly_t tmp_poly;
-  int next_index = *next_index_p;
+
+  printf("CALL\n");
 
   // initializations
   fmpq_init(mid);
   fmpz_init_set_ui(tmp, 1);
-  fmpz_poly_init2(tmp_poly, fmpz_poly_degree(in_poly) + 1);
+  fmpz_poly_init(tmp_poly);
 
   // x = 1/(y + 1) ; roots in ]0, 1[ -> roots in ]0, +inf[
   // x -> 1/x
@@ -24,8 +25,15 @@ int subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_t sol[], fmpq_t start, fmpq_t end,
   // x -> x + 1
   fmpz_poly_taylor_shift(tmp_poly, tmp_poly, tmp);
 
+  char *x = "x";
+  printf("tmp_poly : ");
+  fmpz_poly_print_pretty(tmp_poly, x);
+  printf("\n");
+
   // base case
   int c = count_sign_variations(tmp_poly);
+
+  printf("counting sign_variations of c : %d\n", c);
 
   if (c == 1) {
     fmpq_set(sol[*next_index_p], start);
@@ -89,9 +97,10 @@ void subdiv_algo(fmpz_poly_t in_poly, fmpq_t sol[], ulong *next_index_p) {
   fmpz_poly_t tmp_poly;
   fmpz_poly_init(tmp_poly);
   fmpq_init(bound);
-  cauchy_bound(bound, in_poly);
   fmpq_init(start);
   fmpq_init(end);
+
+  cauchy_bound(bound, in_poly);
 
   int b = fmpq_clog(bound, 2);
 

@@ -11,20 +11,18 @@
 
 int count_sign_variations(fmpz_poly_t poly) {
   slong degree = fmpz_poly_degree(poly);
-
-  int var = 0;
-  for (int i = 0; i < degree; i++) {
-    int s0 = fmpz_sgn(fmpz_poly_get_coeff_ptr(poly, i));
-    int s1 = fmpz_sgn(fmpz_poly_get_coeff_ptr(poly, i + 1));
-    /*
-    slong c0 = fmpz_poly_get_coeff_si(poly, i);
-    slong c1 = fmpz_poly_get_coeff_si(poly, i+1);
-    */
-    if (s0 * s1 < 0) {
-      var++;
+  if (degree < 0)
+    return 0;
+  int coeff_sign = 0, variations = 0,
+      current_sign = fmpz_sgn(fmpz_poly_get_coeff_ptr(poly, 0));
+  for (int i = 0; i < degree + 1; i++) {
+    coeff_sign = fmpz_sgn(fmpz_poly_get_coeff_ptr(poly, i));
+    if (current_sign * coeff_sign < 0) {
+      variations++;
+      current_sign = coeff_sign;
     }
   }
-  return var;
+  return variations;
 }
 
 void reverse_coeffs(fmpz_poly_t out, fmpz_poly_t poly) {

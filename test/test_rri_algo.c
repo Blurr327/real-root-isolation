@@ -4,8 +4,8 @@
 #include <flint/fmpz_poly.h>
 #include <time.h>
 
-void test_root_isolation_intervals(fmpz_poly_t test_poly, ulong degree,
-                                   fmpq_t *sol, ulong length) {
+int test_root_isolation_intervals(fmpz_poly_t test_poly, ulong degree,
+                                  fmpq_t *sol, ulong length) {
   int verbose = 1;
   fmpq_t tmp;
   fmpq_t *evals = malloc((2 * (degree)) * sizeof(fmpq_t));
@@ -28,7 +28,7 @@ void test_root_isolation_intervals(fmpz_poly_t test_poly, ulong degree,
         printf("test_root_isolation_intervals failed. Detected too many or no "
                "roots in one "
                "interval.\n");
-        return;
+        return 0;
       }
     }
   }
@@ -37,10 +37,12 @@ void test_root_isolation_intervals(fmpz_poly_t test_poly, ulong degree,
     fmpq_clear(evals[i]);
   free(evals);
   fmpq_clear(tmp);
+
+  return 1;
 }
 
 // test whether it detects all roots in ]0, 1[
-void test_subdiv_algo_ext(fmpz_poly_t test_poly, ulong degree) {
+int test_subdiv_algo_ext(fmpz_poly_t test_poly, ulong degree) {
   int verbose = 1;
   fmpq_t *sol = malloc((2 * (degree)) * sizeof(fmpq_t));
   fmpq_t start, end;
@@ -57,16 +59,17 @@ void test_subdiv_algo_ext(fmpz_poly_t test_poly, ulong degree) {
   if (verbose)
     printf("number of intervals : %lu\n", next_index / 2);
 
-  test_root_isolation_intervals(test_poly, degree, sol, next_index);
+  int r = test_root_isolation_intervals(test_poly, degree, sol, next_index);
 
   fmpq_clear(start);
   fmpq_clear(end);
   for (int i = 0; i < (2 * degree); i++)
     fmpq_clear(sol[i]);
   free(sol);
+  return r;
 }
 
-void test_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
+int test_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
   int verbose = 1;
   fmpq_t *sol = malloc((2 * (degree)) * sizeof(fmpq_t));
   for (int i = 0; i < (2 * degree); i++)
@@ -77,17 +80,18 @@ void test_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
   if (verbose)
     printf("number of intervals : %lu\n", next_index / 2);
 
-  test_root_isolation_intervals(test_poly, degree, sol, next_index);
+  int r = test_root_isolation_intervals(test_poly, degree, sol, next_index);
 
   for (int i = 0; i < (2 * degree); i++)
     fmpq_clear(sol[i]);
   free(sol);
+  return r;
 }
 
 int main() {
   int random = 1;
   ulong bits = 8;
-  ulong degree = 10000;
+  ulong degree = 4;
   char test_poly_str[] = "3  -1 -1 1";
 
   fmpz_poly_t test_poly;
@@ -96,24 +100,27 @@ int main() {
   flint_randseed(&randomio, time(NULL), time(NULL) + 2);
   fmpz_poly_init2(test_poly, degree + 1);
 
-  if (random)
-    fmpz_poly_randtest(test_poly, &randomio, degree + 1, bits);
-  else
-    fmpz_poly_set_str(test_poly, test_poly_str);
+  int t = 1;
+  while (t) {
+    if (random)
+      fmpz_poly_randtest(test_poly, &randomio, degree + 1, bits);
+    else
+      fmpz_poly_set_str(test_poly, test_poly_str);
+    char *x = "x";
+    printf("TEST POLY : ");
+    fmpz_poly_print_pretty(test_poly, x);
+    printf("\n");
 
-  printf("TEST POLY : ");
-  fmpz_poly_print(test_poly);
-  printf("\n");
+    if (!fmpz_poly_is_squarefree(test_poly)) {
+      printf("Given polynomial is not square free.\n");
+      continue;
+    }
 
-  if (!fmpz_poly_is_squarefree(test_poly)) {
-    printf("Given polynomial is not square free.\n");
-    return 1;
+    printf("test subdiv ext \n");
+    t = test_subdiv_algo_ext(test_poly, degree);
+    // printf("test subdiv \n");
+    // t = test_subdiv_algo(test_poly, degree);
   }
-
-  printf("test subdiv ext \n");
-  test_subdiv_algo_ext(test_poly, degree);
-  printf("test subdiv \n");
-  test_subdiv_algo(test_poly, degree);
 
   fmpz_poly_clear(test_poly);
 }
