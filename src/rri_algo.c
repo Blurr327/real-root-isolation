@@ -102,9 +102,9 @@ void subdiv_algo(fmpz_poly_t in_poly, fmpq_t sol[], ulong *next_index_p) {
 
   cauchy_bound(bound, in_poly);
 
-  printf("INIT BOUND :");
-  fmpq_print(bound);
-  printf("\n");
+  // printf("INIT BOUND :");
+  // fmpq_print(bound);
+  // printf("\n");
 
   int b = fmpq_clog(bound, 2);
   fmpq_set_ui(bound, 1, 1);
@@ -113,12 +113,15 @@ void subdiv_algo(fmpz_poly_t in_poly, fmpq_t sol[], ulong *next_index_p) {
   else
     fmpq_div_2exp(bound, bound, b);
 
-  printf("BOUND ROUNDED TO 2^b :");
-  fmpq_print(bound);
-  printf("\n");
+  // printf("BOUND ROUNDED TO 2^b :");
+  // fmpq_print(bound);
+  // printf("\n");
 
   // roots in [0, bound] -> [0, 1]
   shift_in_proportions_by_k(tmp_poly, in_poly, b);
+  // printf("tmp_poly after scaling var change ");
+  // fmpz_poly_print_pretty(tmp_poly, "x");
+  // printf("\n");
 
   // search in [0, bound]
   fmpq_set_ui(start, 0, 1);
@@ -128,13 +131,27 @@ void subdiv_algo(fmpz_poly_t in_poly, fmpq_t sol[], ulong *next_index_p) {
   subdiv_algo_ext(tmp_poly, sol, start, end, next_index_p);
   // FINDING NEGATIVE ROOTS
   // x -> -x variable change
+  // printf("tmp_poly before neg var change ");
+  // fmpz_poly_print_pretty(tmp_poly, "x");
+  // printf("\n");
+
   neg_varchange(tmp_poly, tmp_poly);
+
+  // printf("tmp_poly after neg var change ");
+  // fmpz_poly_print_pretty(tmp_poly, "x");
+  // printf("\n");
   // search in [-bound, 0]
   fmpq_mul_si(bound, bound, -1);
-  fmpq_set(start, bound);
-  fmpq_set_si(end, 0, 1);
+  fmpq_set_si(start, 0, 1);
+  fmpq_set(end, bound);
 
   subdiv_algo_ext(tmp_poly, sol, start, end, next_index_p);
+
+  // for (int i = 0; i < *next_index_p; i++) {
+  //   printf("sol[%d] = ", i);
+  //   fmpq_print(sol[i]);
+  //   printf("\n");
+  // }
 
   fmpq_clear(start);
   fmpq_clear(end);

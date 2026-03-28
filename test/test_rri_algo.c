@@ -92,8 +92,10 @@ int test_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
 int main() {
   int random = 1;
   ulong bits = 8;
-  ulong degree = 4;
+  ulong degree = 10000;
   char test_poly_str[] = "3  -1 -1 1";
+  int number_of_tests = 1;
+  int t = 1;
 
   fmpz_poly_t test_poly;
   flint_rand_s randomio;
@@ -101,8 +103,6 @@ int main() {
   flint_randseed(&randomio, time(NULL), time(NULL) + 2);
   fmpz_poly_init2(test_poly, degree + 1);
 
-  int number_of_tests = 10000;
-  int t = 1;
   while (t && (number_of_tests--)) {
     printf("================== TEST NUMBER %d ===============\n",
            number_of_tests + 1);
