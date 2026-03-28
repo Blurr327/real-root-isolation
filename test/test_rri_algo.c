@@ -29,11 +29,13 @@ int test_root_isolation_intervals(fmpz_poly_t test_poly, ulong degree,
                "or no "
                "roots in one "
                "interval.\e[0m\n");
-        return 0;
+        goto cleanup;
       }
     }
   }
   printf("\e[32mtest_root_isolation_intervals passed.\e[0m\n");
+
+cleanup:
   for (int i = 0; i < (2 * degree); i++)
     fmpq_clear(evals[i]);
   free(evals);
@@ -90,12 +92,12 @@ int test_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
 }
 
 int main() {
-  int random = 1;
   ulong bits = 8;
-  ulong degree = 10000;
-  char test_poly_str[] = "3  -1 -1 1";
-  int number_of_tests = 1;
+  ulong degree = 20;
+  int number_of_tests = 10;
   int t = 1;
+  int random = 1;
+  char test_poly_str[] = "3  -1 -1 1";
 
   fmpz_poly_t test_poly;
   flint_rand_s randomio;
@@ -110,9 +112,8 @@ int main() {
       fmpz_poly_randtest(test_poly, &randomio, degree + 1, bits);
     else
       fmpz_poly_set_str(test_poly, test_poly_str);
-    char *x = "x";
     printf("==== TEST POLY ====> ");
-    fmpz_poly_print_pretty(test_poly, x);
+    fmpz_poly_print_pretty(test_poly, "x");
     printf("\n");
 
     if (!fmpz_poly_is_squarefree(test_poly)) {
@@ -127,4 +128,5 @@ int main() {
   }
 
   fmpz_poly_clear(test_poly);
+  flint_randclear(&randomio);
 }

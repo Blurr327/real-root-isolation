@@ -68,41 +68,16 @@ void shift_in_proportions_by_k(fmpz_poly_t outPoly, fmpz_poly_t poly, int k) {
   fmpz_clear(c);
 }
 
-void cauchy_bound(fmpq_t bound, fmpz_poly_t poly) {
-  if (fmpz_poly_is_zero(poly)) {
-    fmpq_zero(bound);
-    return;
-  }
-  slong degree = fmpz_poly_degree(poly);
-  fmpz_t currMax;
-  fmpz_init(currMax);
-  fmpz_poly_get_coeff_fmpz(currMax, poly, 0);
-  fmpz_abs(currMax, currMax);
-  for (int i = 0; i < degree; i++) {
-    fmpz_t tmp;
-    fmpz_poly_get_coeff_fmpz(tmp, poly, i);
-    fmpz_abs(tmp, tmp);
-    // printf("current evaluated coeff: %d: ", i);
-    // fmpz_print(tmp);
-    // printf("\n");
-    if (fmpz_cmp(currMax, tmp) < 0) {
-      fmpz_set(currMax, tmp);
-    }
-  }
-  // fmpz_t maxDegreeCoeff = fmpz_poly_lead(poly);
-  fmpz_t maxDegreeCoeff;
-  fmpz_poly_get_coeff_fmpz(maxDegreeCoeff, poly, degree);
-
-  fmpz_abs(maxDegreeCoeff, maxDegreeCoeff);
-
-  fmpq_t currMaxQ;
-  fmpz_t one;
-  fmpz_one(one);
-  fmpq_set_fmpz_frac(currMaxQ, currMax, one);
-  fmpq_div_fmpz(bound, currMaxQ, maxDegreeCoeff);
-  // fmpq_div_fmpz(bound, currMax, bound);
-  fmpq_add_si(bound, bound, 1);
-  fmpz_clear(currMax);
+void cauchy_bound(fmpq_t bound, fmpz_poly_t in_poly) {
+  fmpz_t height, lead;
+  fmpz_init(height);
+  fmpz_init(lead);
+  fmpz_poly_height(height, in_poly);
+  fmpz_poly_get_coeff_fmpz(lead, in_poly, fmpz_poly_degree(in_poly) + 1);
+  fmpq_set_fmpz_frac(bound, height, lead);
+  fmpq_add_ui(bound, bound, 1);
+  fmpz_clear(height);
+  fmpz_clear(lead);
 }
 
 void random_dense_fmpz_poly(fmpz_poly_t poly, flint_rand_t state, slong deg,

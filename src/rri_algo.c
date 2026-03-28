@@ -74,23 +74,6 @@ cleanup:
   return (c % 2);
 }
 
-void normalize_polyposroots(fmpz_poly_t out_poly, fmpz_poly_t in_poly,
-                            fmpq_t bound) {
-  // closest 2^b to the bound
-  int b = fmpq_clog(bound, 2);
-
-  printf("b : ");
-  printf("%d", b);
-  printf("\n");
-
-  printf("bound : ");
-  fmpq_print(bound);
-  printf("\n");
-
-  // normalize polynomial via variable change ]0;2^b[ => ]0;1[
-  shift_in_proportions_by_k(out_poly, in_poly, b);
-}
-
 void subdiv_algo(fmpz_poly_t in_poly, fmpq_t sol[], ulong *next_index_p) {
   fmpq_t bound;
   fmpq_t start, end;
@@ -141,8 +124,8 @@ void subdiv_algo(fmpz_poly_t in_poly, fmpq_t sol[], ulong *next_index_p) {
   // fmpz_poly_print_pretty(tmp_poly, "x");
   // printf("\n");
   // search in [-bound, 0]
-  fmpq_mul_si(bound, bound, -1);
   fmpq_set_si(start, 0, 1);
+  fmpq_mul_si(bound, bound, -1);
   fmpq_set(end, bound);
 
   subdiv_algo_ext(tmp_poly, sol, start, end, next_index_p);
