@@ -79,7 +79,11 @@ int test_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
     fmpq_init(sol[i]);
 
   ulong next_index = 0;
+  clock_t begin = clock();
   subdiv_algo(test_poly, sol, &next_index);
+  clock_t end = clock();
+  double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+  printf("\e[36mTime : %lfs\n\e[0m", time_spent);
   if (verbose)
     printf("number of intervals : %lu\n", next_index / 2);
 
@@ -93,8 +97,8 @@ int test_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
 
 int main() {
   ulong bits = 8;
-  ulong degree = 20;
-  int number_of_tests = 10;
+  ulong degree = 3;
+  int number_of_tests = 1;
   int t = 1;
   int random = 1;
   char test_poly_str[] = "3  -1 -1 1";
@@ -112,12 +116,15 @@ int main() {
       fmpz_poly_randtest(test_poly, &randomio, degree + 1, bits);
     else
       fmpz_poly_set_str(test_poly, test_poly_str);
-    printf("==== TEST POLY ====> ");
-    fmpz_poly_print_pretty(test_poly, "x");
-    printf("\n");
+    if (degree < 15) {
+      printf("==== TEST POLY ====> ");
+      fmpz_poly_print_pretty(test_poly, "x");
+      printf("\n");
+    }
 
-    if (!fmpz_poly_is_squarefree(test_poly)) {
-      printf("Given polynomial is not square free.\n");
+    if (!fmpz_poly_is_squarefree(test_poly) ||
+        !fmpz_poly_get_coeff_ui(test_poly, 0)) {
+      printf("\e[31mGiven polynomial is not square free.\n\e[0m");
       continue;
     }
 

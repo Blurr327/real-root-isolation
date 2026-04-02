@@ -12,8 +12,6 @@ int subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_t sol[], fmpq_t start, fmpq_t end,
   fmpq_t mid;
   fmpz_poly_t tmp_poly;
 
-  // printf("CALL\n");
-
   // initializations
   fmpq_init(mid);
   fmpz_init_set_ui(tmp, 1);
