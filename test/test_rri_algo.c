@@ -7,11 +7,19 @@
 int test_root_isolation_intervals(fmpz_poly_t test_poly, ulong degree,
                                   fmpq_t *sol, ulong length) {
   int verbose = 1;
+  int ret = 1;
   fmpq_t tmp;
   fmpq_t *evals = malloc((2 * (degree)) * sizeof(fmpq_t));
   fmpq_init(tmp);
   for (int i = 0; i < (2 * degree); i++)
     fmpq_init(evals[i]);
+
+  if (((fmpz_poly_degree(test_poly) - length / 2) % 2) == 1) {
+    printf("\e[31mNumber of intervals is incoherent... leads to odd number of "
+           "complex roots.\e[0m\n");
+    ret = 0;
+    goto cleanup;
+  }
 
   for (int i = 0; i < length; i++) {
     fmpz_poly_evaluate_fmpq(evals[i], test_poly, sol[i]);
@@ -29,11 +37,15 @@ int test_root_isolation_intervals(fmpz_poly_t test_poly, ulong degree,
                "or no "
                "roots in one "
                "interval.\e[0m\n");
+        ret = 0;
         goto cleanup;
       }
     }
   }
   printf("\e[32mtest_root_isolation_intervals passed.\e[0m\n");
+  if ((fmpz_poly_degree(test_poly) == (length / 2)) && ret) {
+    printf("\e[32mthe result is definitively correct.\e[0m\n");
+  }
 
 cleanup:
   for (int i = 0; i < (2 * degree); i++)
@@ -41,7 +53,7 @@ cleanup:
   free(evals);
   fmpq_clear(tmp);
 
-  return 1;
+  return ret;
 }
 
 // test whether it detects all roots in ]0, 1[
@@ -98,7 +110,7 @@ int test_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
 int main() {
   ulong bits = 8;
   ulong degree = 3;
-  int number_of_tests = 1;
+  int number_of_tests = 100;
   int t = 1;
   int random = 1;
   char test_poly_str[] = "3  -1 -1 1";

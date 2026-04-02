@@ -72,10 +72,13 @@ void cauchy_bound(fmpq_t bound, fmpz_poly_t in_poly) {
   fmpz_t height, lead;
   fmpz_init(height);
   fmpz_init(lead);
+
   fmpz_poly_height(height, in_poly);
-  fmpz_poly_get_coeff_fmpz(lead, in_poly, fmpz_poly_degree(in_poly) + 1);
+  fmpz_poly_get_coeff_fmpz(lead, in_poly, fmpz_poly_degree(in_poly));
+  fmpz_abs(lead, lead);
   fmpq_set_fmpz_frac(bound, height, lead);
   fmpq_add_ui(bound, bound, 1);
+
   fmpz_clear(height);
   fmpz_clear(lead);
 }
