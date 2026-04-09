@@ -20,6 +20,17 @@ int subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_t sol[], fmpq_t start, fmpq_t end,
   // x = 1/(y + 1) ; roots in ]0, 1[ -> roots in ]0, +inf[
   // x -> 1/x
   fmpz_poly_reverse(tmp_poly, in_poly, fmpz_poly_degree(in_poly) + 1);
+
+  // OPTIMIZATION
+  // int min = fmpz_sizeinbase(fmpz_poly_get_coeff_ptr(tmp_poly, 0), 2);
+  // for (int i = 1; i < (fmpz_poly_degree(tmp_poly) + 1); i++) {
+  //   int a = fmpz_sizeinbase(fmpz_poly_get_coeff_ptr(tmp_poly, i), 2);
+  //   if (a < min)
+  //     min = a;
+  // }
+  // printf("min : %d\n", min / 2);
+  // fmpz_poly_scalar_fdiv_2exp(tmp_poly, tmp_poly, min / 2);
+
   // x -> x + 1
   fmpz_poly_taylor_shift(tmp_poly, tmp_poly, tmp);
 
@@ -31,6 +42,11 @@ int subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_t sol[], fmpq_t start, fmpq_t end,
   // base case
   int c = count_sign_variations(tmp_poly);
 
+  // printf("Interval : ");
+  // fmpq_print(start);
+  // printf(",");
+  // fmpq_print(end);
+  // printf("\n");
   // printf("counting sign_variations of c : %d\n", c);
 
   if (c == 1) {

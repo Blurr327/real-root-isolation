@@ -136,7 +136,7 @@ int main() {
 
     if (!fmpz_poly_is_squarefree(test_poly) ||
         !fmpz_poly_get_coeff_ui(test_poly, 0)) {
-      printf("\e[31mGiven polynomial is not square free.\n\e[0m");
+      printf("\e[31mGiven polynomial is not valid.\n\e[0m");
       continue;
     }
 
