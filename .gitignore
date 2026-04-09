@@ -1,4 +1,5 @@
 obj/
 real_root_isolation
-test_*
+/test_*
 .vscode/
+aliases

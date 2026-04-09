@@ -27,7 +27,7 @@ test_%: $(OBJ_NO_MAIN)
 	$(CC) $(CFLAGS) test/$@.c -o $@ $^ $(LDFLAGS)
 
 vg_%: test_%
-	valgrind --leak-check=full ./$<
+	valgrind --track-origins=yes --leak-check=full ./$<
 
 clean:
 	rm -rf $(OBJ_DIR) test_* $(NAME)
