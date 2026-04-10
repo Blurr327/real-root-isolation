@@ -49,3 +49,9 @@ void fmpq_vec_push_interval(fmpq_vec_t *vec, const fmpq_t a, const fmpq_t b) {
   fmpq_set(vec->data[vec->size + 1], b);
   vec->size += 2;
 }
+
+void fmpq_vec_append(fmpq_vec_t *dest, const fmpq_vec_t *src) {
+  for (ulong i = 0; i < src->size; i++) {
+    fmpq_vec_push(dest, src->data[i]);
+  }
+}

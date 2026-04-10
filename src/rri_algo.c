@@ -6,16 +6,16 @@
 #include <flint/fmpz.h>
 #include <flint/fmpz_poly.h>
 
-// --- subdiv_algo_ext ---
-
 int subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_vec_t *sol, fmpq_t start,
                     fmpq_t end) {
   fmpz_t tmp;
   fmpq_t mid;
+  fmpq_t tmpq;
   fmpz_poly_t tmp_poly;
 
   fmpq_init(mid);
   fmpz_init_set_ui(tmp, 1);
+  fmpq_init(tmpq);
   fmpz_poly_init(tmp_poly);
 
   // x -> 1/x
@@ -39,27 +39,28 @@ int subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_vec_t *sol, fmpq_t start,
 
   // LEFT: x = y/2
   shift_in_proportions_by_k(tmp_poly, in_poly, -1);
-  int n1 = subdiv_algo_ext(tmp_poly, sol, start, mid);
+  subdiv_algo_ext(tmp_poly, sol, start, mid);
 
   // RIGHT: x = (y+1)/2
   shift_in_proportions_by_k(tmp_poly, in_poly, -1);
   fmpz_poly_taylor_shift(tmp_poly, tmp_poly, tmp);
-  int n2 = subdiv_algo_ext(tmp_poly, sol, mid, end);
+  subdiv_algo_ext(tmp_poly, sol, mid, end);
 
   // check midpoint root
-  if (((n1 + n2) % 2) != (c % 2)) {
+  fmpz_poly_evaluate_fmpq(tmpq, in_poly, mid);
+
+  if (fmpq_is_zero(tmpq)) {
     fmpq_vec_push_interval(sol, mid, mid);
   }
 
 cleanup:
   fmpz_clear(tmp);
   fmpq_clear(mid);
+  fmpq_clear(tmpq);
   fmpz_poly_clear(tmp_poly);
 
   return (c % 2);
 }
-
-// --- subdiv_algo ---
 
 void subdiv_algo(fmpz_poly_t in_poly, fmpq_vec_t *sol) {
   fmpq_t bound;

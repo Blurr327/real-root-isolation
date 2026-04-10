@@ -17,5 +17,6 @@ void fmpq_vec_clear(fmpq_vec_t *vec);
 // push operations
 void fmpq_vec_push(fmpq_vec_t *vec, const fmpq_t val);
 void fmpq_vec_push_interval(fmpq_vec_t *vec, const fmpq_t a, const fmpq_t b);
+void fmpq_vec_append(fmpq_vec_t *dest, const fmpq_vec_t *src);
 
 #endif
