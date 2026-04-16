@@ -120,10 +120,10 @@ int test_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
 int main() {
   ulong bits = 8;
   ulong degree = 3;
-  int number_of_tests = 10;
+  int number_of_tests = 100;
   int t = 1;
   int random = 1;
-  char test_poly_str[] = "3  -1 -1 1";
+  char test_poly_str[] = "3  1 -6 8";
 
   fmpz_poly_t test_poly;
   flint_rand_s randomio;

@@ -13,10 +13,13 @@ int count_sign_variations(fmpz_poly_t poly) {
   slong degree = fmpz_poly_degree(poly);
   if (degree < 0)
     return 0;
-  int coeff_sign = 0, variations = 0,
-      current_sign = fmpz_sgn(fmpz_poly_get_coeff_ptr(poly, 0));
+  int coeff_sign = 0, variations = 0, current_sign = 0;
   for (int i = 0; i < degree + 1; i++) {
     coeff_sign = fmpz_sgn(fmpz_poly_get_coeff_ptr(poly, i));
+    if (current_sign == 0 && coeff_sign != 0) {
+      current_sign = coeff_sign;
+      continue;
+    }
     if (current_sign * coeff_sign < 0) {
       variations++;
       current_sign = coeff_sign;
@@ -57,7 +60,7 @@ void shift_in_proportions_by_k(fmpz_poly_t outPoly, fmpz_poly_t poly, int k) {
   int direction = (k > 0) ? 1 : 0;
   k = abs(k);
 
-  int a = (direction) ? 0 : degree;
+  int a = (direction) ? 0 : (degree * k);
   int b = (direction) ? 1 : (-1);
 
   for (int i = 0; i < degree + 1; i++) {

@@ -1,6 +1,7 @@
 #include "../include/rri_algo.h"
 #include "../include/fmpq_vec.h"
 #include "../include/poly_utils.h"
+#include "../include/utils.h"
 
 #include <flint/fmpq.h>
 #include <flint/fmpz.h>
@@ -24,6 +25,9 @@ int subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_vec_t *sol, fmpq_t start,
   // x -> x + 1
   fmpz_poly_taylor_shift(tmp_poly, tmp_poly, tmp);
 
+  p_irvl(start, end);
+  p(tmp_poly, "tmp for counting : ");
+
   int c = count_sign_variations(tmp_poly);
 
   if (c == 1) {
@@ -39,11 +43,13 @@ int subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_vec_t *sol, fmpq_t start,
 
   // LEFT: x = y/2
   shift_in_proportions_by_k(tmp_poly, in_poly, -1);
+  p(tmp_poly, "for left : ");
   subdiv_algo_ext(tmp_poly, sol, start, mid);
 
   // RIGHT: x = (y+1)/2
   shift_in_proportions_by_k(tmp_poly, in_poly, -1);
   fmpz_poly_taylor_shift(tmp_poly, tmp_poly, tmp);
+  p(tmp_poly, "for right : ");
   subdiv_algo_ext(tmp_poly, sol, mid, end);
 
   // check midpoint root
