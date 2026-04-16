@@ -28,27 +28,6 @@ int count_sign_variations(fmpz_poly_t poly) {
   return variations;
 }
 
-void reverse_coeffs(fmpz_poly_t out, fmpz_poly_t poly) {
-  slong deg = fmpz_poly_degree(poly);
-
-  if (deg < 0) { // zero polynomial
-    fmpz_poly_zero(out);
-    return;
-  }
-
-  fmpz_poly_zero(out);
-
-  fmpz_t c;
-  fmpz_init(c);
-
-  for (slong i = 0; i <= deg; i++) {
-    fmpz_poly_get_coeff_fmpz(c, poly, i);
-    fmpz_poly_set_coeff_fmpz(out, deg - i, c);
-  }
-
-  fmpz_clear(c);
-}
-
 void shift_in_proportions_by_k(fmpz_poly_t outPoly, fmpz_poly_t poly, int k) {
   fmpz_t c;
   fmpz_init(c);
