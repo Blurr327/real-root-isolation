@@ -4,7 +4,7 @@ SRC_DIR = src
 OBJ_DIR = obj
 INC_DIR = include
 
-CC = gcc
+CC = gcc -fopenmp
 CFLAGS = -I$(INC_DIR) -g
 LDFLAGS = -lm -lgmp -lflint
 

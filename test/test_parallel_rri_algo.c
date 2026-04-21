@@ -1,10 +1,11 @@
 #include "../include/fmpq_vec.h"
+#include "../include/parallel_rri_algo.h"
 #include "../include/poly_utils.h"
-#include "../include/rri_algo.h"
 
 #include <flint/flint.h>
 #include <flint/fmpq.h>
 #include <flint/fmpz_poly.h>
+#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -62,45 +63,44 @@ cleanup:
   return ret;
 }
 
-int test_subdiv_algo_ext(fmpz_poly_t test_poly, ulong degree) {
+// int test_par_subdiv_algo_ext(fmpz_poly_t test_poly, ulong degree) {
+
+//   fmpq_vec_t sol;
+//   fmpq_vec_init(&sol);
+
+//   fmpq_t start, end;
+//   fmpq_init(start);
+//   fmpq_init(end);
+
+//   fmpq_set_ui(start, 0, 1);
+//   fmpq_set_ui(end, 1, 1);
+
+//   par_subdiv_algo_ext(test_poly, &sol, start, end, 0);
+
+//   if (VERBOSE)
+//     printf("number of intervals : %lu\n", sol.size / 2);
+
+//   int r = test_root_isolation_intervals(test_poly, sol.data, sol.size);
+
+//   fmpq_vec_clear(&sol);
+//   fmpq_clear(start);
+//   fmpq_clear(end);
+
+//   return r;
+// }
+
+int test_par_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
 
   fmpq_vec_t sol;
   fmpq_vec_init(&sol);
 
-  fmpq_t start, end;
-  fmpq_init(start);
-  fmpq_init(end);
+  double begin = omp_get_wtime();
 
-  fmpq_set_ui(start, 0, 1);
-  fmpq_set_ui(end, 1, 1);
+  par_subdiv_algo(test_poly, &sol);
 
-  subdiv_algo_ext(test_poly, &sol, start, end);
+  double end = omp_get_wtime();
 
-  if (VERBOSE)
-    printf("number of intervals : %lu\n", sol.size / 2);
-
-  int r = test_root_isolation_intervals(test_poly, sol.data, sol.size);
-
-  fmpq_vec_clear(&sol);
-  fmpq_clear(start);
-  fmpq_clear(end);
-
-  return r;
-}
-
-int test_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
-
-  fmpq_vec_t sol;
-  fmpq_vec_init(&sol);
-
-  clock_t begin = clock();
-
-  subdiv_algo(test_poly, &sol);
-
-  clock_t end = clock();
-  double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-
-  printf("\e[36mTime : %lfs\n\e[0m", time_spent);
+  printf("\e[36mTime : %lfs\n\e[0m", end - begin);
 
   if (VERBOSE)
     printf("number of intervals : %lu\n", sol.size / 2);
@@ -156,7 +156,7 @@ int main() {
     }
 
     printf("= test subdiv =\n");
-    ok = test_subdiv_algo(test_poly, degree);
+    ok = test_par_subdiv_algo(test_poly, degree);
   }
 
   if (number_of_tests == -1)
