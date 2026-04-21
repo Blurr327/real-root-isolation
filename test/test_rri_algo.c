@@ -1,4 +1,5 @@
 #include "../include/fmpq_vec.h"
+#include "../include/poly_utils.h"
 #include "../include/rri_algo.h"
 
 #include <flint/flint.h>
@@ -8,11 +9,10 @@
 #include <stdlib.h>
 #include <time.h>
 
-// --- interval correctness test ---
+#define VERBOSE 1
 
-int test_root_isolation_intervals(fmpz_poly_t test_poly, ulong degree,
-                                  fmpq_t *sol, ulong length) {
-  int verbose = 1;
+int test_root_isolation_intervals(fmpz_poly_t test_poly, fmpq_t *sol,
+                                  ulong length) {
   int ret = 1;
 
   fmpq_t tmp, eval_left, eval_right;
@@ -34,7 +34,7 @@ int test_root_isolation_intervals(fmpz_poly_t test_poly, ulong degree,
     fmpz_poly_evaluate_fmpq(eval_left, test_poly, sol[i]);
     fmpz_poly_evaluate_fmpq(eval_right, test_poly, sol[i + 1]);
 
-    if (verbose) {
+    if (VERBOSE) {
       printf("[");
       fmpq_print(sol[i]);
       printf(", ");
@@ -62,10 +62,7 @@ cleanup:
   return ret;
 }
 
-// --- test subdiv_algo_ext ---
-
 int test_subdiv_algo_ext(fmpz_poly_t test_poly, ulong degree) {
-  int verbose = 1;
 
   fmpq_vec_t sol;
   fmpq_vec_init(&sol);
@@ -79,10 +76,10 @@ int test_subdiv_algo_ext(fmpz_poly_t test_poly, ulong degree) {
 
   subdiv_algo_ext(test_poly, &sol, start, end);
 
-  if (verbose)
+  if (VERBOSE)
     printf("number of intervals : %lu\n", sol.size / 2);
 
-  int r = test_root_isolation_intervals(test_poly, degree, sol.data, sol.size);
+  int r = test_root_isolation_intervals(test_poly, sol.data, sol.size);
 
   fmpq_vec_clear(&sol);
   fmpq_clear(start);
@@ -91,10 +88,7 @@ int test_subdiv_algo_ext(fmpz_poly_t test_poly, ulong degree) {
   return r;
 }
 
-// --- test subdiv_algo ---
-
 int test_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
-  int verbose = 1;
 
   fmpq_vec_t sol;
   fmpq_vec_init(&sol);
@@ -108,21 +102,19 @@ int test_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
 
   printf("\e[36mTime : %lfs\n\e[0m", time_spent);
 
-  if (verbose)
+  if (VERBOSE)
     printf("number of intervals : %lu\n", sol.size / 2);
 
-  int r = test_root_isolation_intervals(test_poly, degree, sol.data, sol.size);
+  int r = test_root_isolation_intervals(test_poly, sol.data, sol.size);
 
   fmpq_vec_clear(&sol);
 
   return r;
 }
 
-// --- main ---
-
 int main() {
   ulong bits = 8;
-  ulong degree = 500;
+  ulong degree = 10;
   int number_of_tests = 1000;
   int ok = 1;
   int random = 1;
@@ -136,15 +128,25 @@ int main() {
 
   fmpz_poly_init2(test_poly, degree + 1);
 
+  if (!random)
+    number_of_tests = 1;
+
   while (ok && (number_of_tests--)) {
     printf("================== TEST NUMBER %d ===============\n",
            number_of_tests + 1);
 
-    if (random)
-      fmpz_poly_randtest(test_poly, &randomio, degree + 1, bits);
-    else
+    // generating/setting the polynomial
+    if (!random)
       fmpz_poly_set_str(test_poly, test_poly_str);
 
+    if (random) {
+      do
+        random_dense_fmpz_poly(test_poly, &randomio, degree, bits);
+      while (!fmpz_poly_is_squarefree(test_poly) ||
+             !fmpz_poly_get_coeff_ui(test_poly, 0));
+    }
+
+    // printing the polynomial
     if (degree < 15) {
       printf("==== TEST POLY ====> ");
       fmpz_poly_print_pretty(test_poly, "x");
@@ -153,16 +155,14 @@ int main() {
       printf("\n");
     }
 
-    if (!fmpz_poly_is_squarefree(test_poly) ||
-        !fmpz_poly_get_coeff_ui(test_poly, 0)) {
-      continue;
-    }
-
     printf("= test subdiv =\n");
     ok = test_subdiv_algo(test_poly, degree);
   }
+
   if (number_of_tests == -1)
     printf("\e[32mAll tests passed.\e[0m\n");
+
+  // clean up
   fmpz_poly_clear(test_poly);
   flint_randclear(&randomio);
 
