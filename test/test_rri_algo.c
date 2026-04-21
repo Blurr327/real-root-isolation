@@ -20,8 +20,11 @@ int test_root_isolation_intervals(fmpz_poly_t test_poly, ulong degree,
   fmpq_init(eval_left);
   fmpq_init(eval_right);
 
-  if (((fmpz_poly_degree(test_poly) - length / 2) % 2) == 1) {
-    printf("\e[31mNumber of intervals is incoherent.\e[0m\n");
+  ulong num_real_roots = fmpz_poly_num_real_roots(test_poly);
+
+  if (num_real_roots != (length / 2)) {
+    printf("\e[31mExpected %lu roots, got %lu roots\e[0m\n", num_real_roots,
+           length / 2);
     ret = 0;
     goto cleanup;
   }
@@ -119,11 +122,11 @@ int test_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
 
 int main() {
   ulong bits = 8;
-  ulong degree = 3;
-  int number_of_tests = 100;
-  int t = 1;
+  ulong degree = 500;
+  int number_of_tests = 1000;
+  int ok = 1;
   int random = 1;
-  char test_poly_str[] = "3  1 -6 8";
+  char test_poly_str[] = "4  -8 0 106 -52";
 
   fmpz_poly_t test_poly;
   flint_rand_s randomio;
@@ -133,7 +136,7 @@ int main() {
 
   fmpz_poly_init2(test_poly, degree + 1);
 
-  while (t && (number_of_tests--)) {
+  while (ok && (number_of_tests--)) {
     printf("================== TEST NUMBER %d ===============\n",
            number_of_tests + 1);
 
@@ -146,18 +149,20 @@ int main() {
       printf("==== TEST POLY ====> ");
       fmpz_poly_print_pretty(test_poly, "x");
       printf("\n");
+      fmpz_poly_print(test_poly);
+      printf("\n");
     }
 
     if (!fmpz_poly_is_squarefree(test_poly) ||
         !fmpz_poly_get_coeff_ui(test_poly, 0)) {
-      printf("\e[31mInvalid polynomial.\n\e[0m");
       continue;
     }
 
     printf("= test subdiv =\n");
-    t = test_subdiv_algo(test_poly, degree);
+    ok = test_subdiv_algo(test_poly, degree);
   }
-
+  if (number_of_tests == -1)
+    printf("\e[32mAll tests passed.\e[0m\n");
   fmpz_poly_clear(test_poly);
   flint_randclear(&randomio);
 

@@ -13,7 +13,6 @@ int test_count_sign_variations_random(int N) {
   flint_rand_t state;
   flint_randinit(state);
 
-  // seed properly
   flint_randseed(state, time(NULL), clock());
 
   fmpz_poly_t poly;
@@ -25,7 +24,7 @@ int test_count_sign_variations_random(int N) {
 
   for (int t = 0; t < N; t++) {
 
-    // ALWAYS generate a fresh polynomial
+
     do {
       fmpz_poly_randtest(poly, state, 10, 8);
     } while (fmpz_poly_is_zero(poly));

@@ -25,13 +25,19 @@ int subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_vec_t *sol, fmpq_t start,
   // x -> x + 1
   fmpz_poly_taylor_shift(tmp_poly, tmp_poly, tmp);
 
-  p_irvl(start, end);
-  p(tmp_poly, "tmp for counting : ");
+  if (DEBUG) {
+    p_irvl(start, end);
+    p(tmp_poly, "tmp for counting : ");
+  }
 
   int c = count_sign_variations(tmp_poly);
 
   if (c == 1) {
     fmpq_vec_push_interval(sol, start, end);
+  }
+
+  if (DEBUG) {
+    printf("Number of sign variations counted : %d\n", c);
   }
 
   if (c == 1 || c == 0)
@@ -43,19 +49,20 @@ int subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_vec_t *sol, fmpq_t start,
 
   // LEFT: x = y/2
   shift_in_proportions_by_k(tmp_poly, in_poly, -1);
-  p(tmp_poly, "for left : ");
-  subdiv_algo_ext(tmp_poly, sol, start, mid);
+  if (DEBUG) {
+    p(tmp_poly, "for left : ");
+  }
+  int c1 = subdiv_algo_ext(tmp_poly, sol, start, mid);
 
   // RIGHT: x = (y+1)/2
   shift_in_proportions_by_k(tmp_poly, in_poly, -1);
   fmpz_poly_taylor_shift(tmp_poly, tmp_poly, tmp);
-  p(tmp_poly, "for right : ");
-  subdiv_algo_ext(tmp_poly, sol, mid, end);
+  if (DEBUG) {
+    p(tmp_poly, "for right : ");
+  }
+  int c2 = subdiv_algo_ext(tmp_poly, sol, mid, end);
 
-  // check midpoint root
-  fmpz_poly_evaluate_fmpq(tmpq, in_poly, mid);
-
-  if (fmpq_is_zero(tmpq)) {
+  if ((c1 + c2) % 2 != c % 2) {
     fmpq_vec_push_interval(sol, mid, mid);
   }
 
