@@ -21,6 +21,16 @@ int test_root_isolation_intervals(fmpz_poly_t test_poly, fmpq_t *sol,
   fmpq_init(eval_left);
   fmpq_init(eval_right);
 
+  if (VERBOSE) {
+    for (ulong i = 0; i < length; i += 2) {
+      printf("[");
+      fmpq_print(sol[i]);
+      printf(", ");
+      fmpq_print(sol[i + 1]);
+      printf("]\n");
+    }
+  }
+
   ulong num_real_roots = fmpz_poly_num_real_roots(test_poly);
 
   if (num_real_roots != (length / 2)) {
@@ -34,14 +44,6 @@ int test_root_isolation_intervals(fmpz_poly_t test_poly, fmpq_t *sol,
     // evaluate endpoints
     fmpz_poly_evaluate_fmpq(eval_left, test_poly, sol[i]);
     fmpz_poly_evaluate_fmpq(eval_right, test_poly, sol[i + 1]);
-
-    if (VERBOSE) {
-      printf("[");
-      fmpq_print(sol[i]);
-      printf(", ");
-      fmpq_print(sol[i + 1]);
-      printf("]\n");
-    }
 
     // check sign change
     fmpq_mul(tmp, eval_left, eval_right);
@@ -62,32 +64,6 @@ cleanup:
 
   return ret;
 }
-
-// int test_par_subdiv_algo_ext(fmpz_poly_t test_poly, ulong degree) {
-
-//   fmpq_vec_t sol;
-//   fmpq_vec_init(&sol);
-
-//   fmpq_t start, end;
-//   fmpq_init(start);
-//   fmpq_init(end);
-
-//   fmpq_set_ui(start, 0, 1);
-//   fmpq_set_ui(end, 1, 1);
-
-//   par_subdiv_algo_ext(test_poly, &sol, start, end, 0);
-
-//   if (VERBOSE)
-//     printf("number of intervals : %lu\n", sol.size / 2);
-
-//   int r = test_root_isolation_intervals(test_poly, sol.data, sol.size);
-
-//   fmpq_vec_clear(&sol);
-//   fmpq_clear(start);
-//   fmpq_clear(end);
-
-//   return r;
-// }
 
 int test_par_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
 
@@ -114,8 +90,8 @@ int test_par_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
 
 int main() {
   ulong bits = 8;
-  ulong degree = 5000;
-  int number_of_tests = 1;
+  ulong degree = 10;
+  int number_of_tests = 100;
   int ok = 1;
   int random = 1;
   char test_poly_str[] = "4  -8 0 106 -52";

@@ -62,10 +62,10 @@ void par_subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_vec_t *sol, fmpq_t start,
   fmpz_poly_taylor_shift(right_poly, right_poly, tmp);
 
   // task creation
-#pragma omp task shared(sol) if (depth < 16)
+#pragma omp task shared(sol) if (depth < MAX_PARALLELIZATION_DEPTH)
   par_subdiv_algo_ext(left_poly, sol, start, mid, depth + 1);
 
-#pragma omp task shared(sol) if (depth < 16)
+#pragma omp task shared(sol) if (depth < MAX_PARALLELIZATION_DEPTH)
   par_subdiv_algo_ext(right_poly, sol, mid, end, depth + 1);
 
 #pragma omp taskwait

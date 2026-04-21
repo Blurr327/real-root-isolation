@@ -4,6 +4,7 @@
 
 #include <flint/flint.h>
 #include <flint/fmpq.h>
+#include <flint/fmpz.h>
 #include <flint/fmpz_poly.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,6 +21,15 @@ int test_root_isolation_intervals(fmpz_poly_t test_poly, fmpq_t *sol,
   fmpq_init(eval_left);
   fmpq_init(eval_right);
 
+  if (VERBOSE) {
+    for (ulong i = 0; i < length; i += 2) {
+      printf("[");
+      fmpq_print(sol[i]);
+      printf(", ");
+      fmpq_print(sol[i + 1]);
+      printf("]\n");
+    }
+  }
   ulong num_real_roots = fmpz_poly_num_real_roots(test_poly);
 
   if (num_real_roots != (length / 2)) {
@@ -33,14 +43,6 @@ int test_root_isolation_intervals(fmpz_poly_t test_poly, fmpq_t *sol,
     // evaluate endpoints
     fmpz_poly_evaluate_fmpq(eval_left, test_poly, sol[i]);
     fmpz_poly_evaluate_fmpq(eval_right, test_poly, sol[i + 1]);
-
-    if (VERBOSE) {
-      printf("[");
-      fmpq_print(sol[i]);
-      printf(", ");
-      fmpq_print(sol[i + 1]);
-      printf("]\n");
-    }
 
     // check sign change
     fmpq_mul(tmp, eval_left, eval_right);
@@ -88,7 +90,7 @@ int test_subdiv_algo_ext(fmpz_poly_t test_poly, ulong degree) {
   return r;
 }
 
-int test_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
+int test_subdiv_algo(fmpz_poly_t test_poly, ulong degree, double *time) {
 
   fmpq_vec_t sol;
   fmpq_vec_init(&sol);
@@ -99,6 +101,7 @@ int test_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
 
   clock_t end = clock();
   double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+  *time = time_spent;
 
   printf("\e[36mTime : %lfs\n\e[0m", time_spent);
 
@@ -114,8 +117,8 @@ int test_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
 
 int main() {
   ulong bits = 8;
-  ulong degree = 5000;
-  int number_of_tests = 1;
+  ulong degree = 10;
+  int number_of_tests = 100;
   int ok = 1;
   int random = 1;
   char test_poly_str[] = "4  -8 0 106 -52";
@@ -131,9 +134,11 @@ int main() {
   if (!random)
     number_of_tests = 1;
 
-  while (ok && (number_of_tests--)) {
-    printf("================== TEST NUMBER %d ===============\n",
-           number_of_tests + 1);
+  double time_spent = 0;
+  double avg_time = 0;
+  int count = number_of_tests;
+  while (ok && (count--)) {
+    printf("================== TEST NUMBER %d ===============\n", count + 1);
 
     // generating/setting the polynomial
     if (!random)
@@ -156,10 +161,13 @@ int main() {
     }
 
     printf("= test subdiv =\n");
-    ok = test_subdiv_algo(test_poly, degree);
+    ok = test_subdiv_algo(test_poly, degree, &time_spent);
+    avg_time += time_spent;
   }
 
-  if (number_of_tests == -1)
+  avg_time /= number_of_tests;
+  printf("\e[36mAverage Time : %lf\e[0m\n", avg_time);
+  if (count == -1)
     printf("\e[32mAll tests passed.\e[0m\n");
 
   // clean up
