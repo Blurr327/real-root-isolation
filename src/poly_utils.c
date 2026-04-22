@@ -6,8 +6,7 @@
 #include <flint/fmpq.h>
 #include <flint/fmpz.h>
 #include <flint/fmpz_poly.h>
-
-// #define DEBUG 0
+#include <omp.h>
 
 int count_sign_variations(fmpz_poly_t poly) {
   slong degree = fmpz_poly_degree(poly);
@@ -112,4 +111,63 @@ void neg_varchange(fmpz_poly_t out_poly, fmpz_poly_t in_poly) {
     fmpz_poly_set_coeff_fmpz(out_poly, i, c);
   }
   fmpz_clear(c);
+}
+
+void fmpz_poly_split_coeffs(fmpz_poly_t P1, fmpz_poly_t P2,
+                            const fmpz_poly_t f) {
+  slong n = fmpz_poly_length(f);
+
+  fmpz_poly_fit_length(P1, n);
+  fmpz_poly_fit_length(P2, n);
+
+  _fmpz_poly_set_length(P1, n);
+  _fmpz_poly_set_length(P2, n);
+
+  for (slong i = 0; i < n; i++) {
+    const fmpz *c = fmpz_poly_get_coeff_ptr(f, i);
+
+    // P1 = floor(c / 2)
+    fmpz_fdiv_q_2exp(P1->coeffs + i, c, 1);
+
+    // P2 = c - P1
+    fmpz_sub(P2->coeffs + i, c, P1->coeffs + i);
+  }
+
+  _fmpz_poly_normalise(P1);
+  _fmpz_poly_normalise(P2);
+}
+
+void fmpz_poly_taylor_shift_split_parallel(fmpz_poly_t res, const fmpz_poly_t f,
+                                           const fmpz_t a) {
+  fmpz_poly_t P1, P2;
+  fmpz_poly_init(P1);
+  fmpz_poly_init(P2);
+
+  fmpz_poly_split_coeffs(P1, P2, f);
+
+  fmpz_poly_t R1, R2;
+  fmpz_poly_init(R1);
+  fmpz_poly_init(R2);
+
+// parallel execution
+#pragma omp parallel sections
+  {
+#pragma omp section
+    {
+      fmpz_poly_taylor_shift(R1, P1, a);
+    }
+
+#pragma omp section
+    {
+      fmpz_poly_taylor_shift(R2, P2, a);
+    }
+  }
+
+  // combine
+  fmpz_poly_add(res, R1, R2);
+
+  fmpz_poly_clear(P1);
+  fmpz_poly_clear(P2);
+  fmpz_poly_clear(R1);
+  fmpz_poly_clear(R2);
 }

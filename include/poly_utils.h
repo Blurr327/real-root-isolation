@@ -22,4 +22,10 @@ void random_dense_fmpz_poly(fmpz_poly_t poly, flint_rand_t state, slong degree,
                             flint_bitcnt_t bits);
 
 slong fmpq_clog(fmpq_t n, int b);
+
+void fmpz_poly_split_coeffs(fmpz_poly_t P1, fmpz_poly_t P2,
+                            const fmpz_poly_t f);
+
+void fmpz_poly_taylor_shift_split_parallel(fmpz_poly_t res, const fmpz_poly_t f,
+                                           const fmpz_t a);
 #endif // POLY_UTILS_H

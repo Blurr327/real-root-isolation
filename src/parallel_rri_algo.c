@@ -26,6 +26,7 @@ void par_subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_vec_t *sol, fmpq_t start,
   fmpz_poly_reverse(tmp_poly, in_poly, fmpz_poly_degree(in_poly) + 1);
 
   // x -> x + 1
+  // fmpz_poly_taylor_shift_split_parallel(tmp_poly, tmp_poly, tmp);
   fmpz_poly_taylor_shift(tmp_poly, tmp_poly, tmp);
 
   int c = count_sign_variations(tmp_poly);
@@ -59,6 +60,7 @@ void par_subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_vec_t *sol, fmpq_t start,
 
   // RIGHT: x = (y+1)/2
   shift_in_proportions_by_k(right_poly, in_poly, -1);
+  // fmpz_poly_taylor_shift_split_parallel(right_poly, right_poly, tmp);
   fmpz_poly_taylor_shift(right_poly, right_poly, tmp);
 
   // task creation
