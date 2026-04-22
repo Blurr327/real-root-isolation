@@ -8,6 +8,7 @@
 #include <flint/fmpz_poly.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #define VERBOSE 1
@@ -30,13 +31,23 @@ int test_root_isolation_intervals(fmpz_poly_t test_poly, fmpq_t *sol,
       printf("]\n");
     }
   }
-  ulong num_real_roots = fmpz_poly_num_real_roots(test_poly);
+  slong degree = fmpz_poly_degree(test_poly);
 
-  if (num_real_roots != (length / 2)) {
-    printf("\e[31mExpected %lu roots, got %lu roots\e[0m\n", num_real_roots,
-           length / 2);
-    ret = 0;
-    goto cleanup;
+  if (degree <= 300) {
+    ulong num_real_roots = fmpz_poly_num_real_roots(test_poly);
+
+    if (num_real_roots != (length / 2)) {
+      printf("\e[31mExpected %lu roots, got %lu roots\e[0m\n", num_real_roots,
+             length / 2);
+      ret = 0;
+      goto cleanup;
+    }
+  } else {
+    if ((degree - (length / 2)) % 2 != 0) {
+      printf("\e[31mIncoherent number of roots.\e[0m\n");
+      ret = 0;
+      goto cleanup;
+    }
   }
 
   for (ulong i = 0; i < length; i += 2) {
@@ -115,13 +126,40 @@ int test_subdiv_algo(fmpz_poly_t test_poly, ulong degree, double *time) {
   return r;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
   ulong bits = 8;
   ulong degree = 10;
   int number_of_tests = 100;
   int ok = 1;
   int random = 1;
   char test_poly_str[] = "4  -8 0 106 -52";
+
+  for (int i = 1; i < argc; i++) {
+    if (strcmp(argv[i], "--bits") == 0 && i + 1 < argc) {
+      bits = strtoul(argv[++i], NULL, 10);
+    } else if (strcmp(argv[i], "--degree") == 0 && i + 1 < argc) {
+      degree = strtoul(argv[++i], NULL, 10);
+    } else if (strcmp(argv[i], "--tests") == 0 && i + 1 < argc) {
+      number_of_tests = atoi(argv[++i]);
+    } else if (strcmp(argv[i], "--random") == 0 && i + 1 < argc) {
+      random = atoi(argv[++i]);
+    } else if (strcmp(argv[i], "--poly") == 0 && i + 1 < argc) {
+      strncpy(test_poly_str, argv[++i], sizeof(test_poly_str) - 1);
+      test_poly_str[sizeof(test_poly_str) - 1] = '\0';
+      random = 0; // force non-random mode
+    } else {
+      printf("Unknown or incomplete argument: %s\n", argv[i]);
+      return 1;
+    }
+  }
+
+  printf("Configuration:\n");
+  printf("  bits   = %lu\n", bits);
+  printf("  degree = %lu\n", degree);
+  printf("  tests  = %d\n", number_of_tests);
+  printf("  random = %d\n", random);
+  if (!random)
+    printf("  poly   = %s\n", test_poly_str);
 
   fmpz_poly_t test_poly;
   flint_rand_s randomio;

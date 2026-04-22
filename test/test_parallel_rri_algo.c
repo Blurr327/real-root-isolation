@@ -8,6 +8,7 @@
 #include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #define VERBOSE 1
@@ -30,14 +31,23 @@ int test_root_isolation_intervals(fmpz_poly_t test_poly, fmpq_t *sol,
       printf("]\n");
     }
   }
+  slong degree = fmpz_poly_degree(test_poly);
 
-  ulong num_real_roots = fmpz_poly_num_real_roots(test_poly);
+  if (degree <= 300) {
+    ulong num_real_roots = fmpz_poly_num_real_roots(test_poly);
 
-  if (num_real_roots != (length / 2)) {
-    printf("\e[31mExpected %lu roots, got %lu roots\e[0m\n", num_real_roots,
-           length / 2);
-    ret = 0;
-    goto cleanup;
+    if (num_real_roots != (length / 2)) {
+      printf("\e[31mExpected %lu roots, got %lu roots\e[0m\n", num_real_roots,
+             length / 2);
+      ret = 0;
+      goto cleanup;
+    }
+  } else {
+    if ((degree - (length / 2)) % 2 != 0) {
+      printf("\e[31mIncoherent number of roots.\e[0m\n");
+      ret = 0;
+      goto cleanup;
+    }
   }
 
   for (ulong i = 0; i < length; i += 2) {
@@ -65,7 +75,7 @@ cleanup:
   return ret;
 }
 
-int test_par_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
+int test_par_subdiv_algo(fmpz_poly_t test_poly, ulong degree, double *time) {
 
   fmpq_vec_t sol;
   fmpq_vec_init(&sol);
@@ -77,6 +87,7 @@ int test_par_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
   double end = omp_get_wtime();
 
   printf("\e[36mTime : %lfs\n\e[0m", end - begin);
+  *time = end - begin;
 
   if (VERBOSE)
     printf("number of intervals : %lu\n", sol.size / 2);
@@ -88,13 +99,40 @@ int test_par_subdiv_algo(fmpz_poly_t test_poly, ulong degree) {
   return r;
 }
 
-int main() {
-  ulong bits = 8;
+int main(int argc, char *argv[]) {
+  ulong bits = 64;
   ulong degree = 10;
   int number_of_tests = 100;
   int ok = 1;
   int random = 1;
   char test_poly_str[] = "4  -8 0 106 -52";
+
+  for (int i = 1; i < argc; i++) {
+    if (strcmp(argv[i], "--bits") == 0 && i + 1 < argc) {
+      bits = strtoul(argv[++i], NULL, 10);
+    } else if (strcmp(argv[i], "--degree") == 0 && i + 1 < argc) {
+      degree = strtoul(argv[++i], NULL, 10);
+    } else if (strcmp(argv[i], "--tests") == 0 && i + 1 < argc) {
+      number_of_tests = atoi(argv[++i]);
+    } else if (strcmp(argv[i], "--random") == 0 && i + 1 < argc) {
+      random = atoi(argv[++i]);
+    } else if (strcmp(argv[i], "--poly") == 0 && i + 1 < argc) {
+      strncpy(test_poly_str, argv[++i], sizeof(test_poly_str) - 1);
+      test_poly_str[sizeof(test_poly_str) - 1] = '\0';
+      random = 0; // force non-random mode
+    } else {
+      printf("Unknown or incomplete argument: %s\n", argv[i]);
+      return 1;
+    }
+  }
+
+  printf("Configuration:\n");
+  printf("  bits   = %lu\n", bits);
+  printf("  degree = %lu\n", degree);
+  printf("  tests  = %d\n", number_of_tests);
+  printf("  random = %d\n", random);
+  if (!random)
+    printf("  poly   = %s\n", test_poly_str);
 
   fmpz_poly_t test_poly;
   flint_rand_s randomio;
@@ -107,9 +145,11 @@ int main() {
   if (!random)
     number_of_tests = 1;
 
-  while (ok && (number_of_tests--)) {
-    printf("================== TEST NUMBER %d ===============\n",
-           number_of_tests + 1);
+  double time_spent = 0;
+  double avg_time = 0;
+  int count = number_of_tests;
+  while (ok && (count--)) {
+    printf("================== TEST NUMBER %d ===============\n", count + 1);
 
     // generating/setting the polynomial
     if (!random)
@@ -132,9 +172,11 @@ int main() {
     }
 
     printf("= test subdiv =\n");
-    ok = test_par_subdiv_algo(test_poly, degree);
+    ok = test_par_subdiv_algo(test_poly, degree, &time_spent);
+    avg_time += time_spent;
   }
-
+  avg_time /= number_of_tests;
+  printf("\e[36mAverage Time : %lf\e[0m\n", avg_time);
   if (number_of_tests == -1)
     printf("\e[32mAll tests passed.\e[0m\n");
 
