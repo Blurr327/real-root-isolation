@@ -1,11 +1,11 @@
 #include "../include/fmpq_vec.h"
+#include "../include/parallel_rri_algo.h"
 #include "../include/poly_utils.h"
-#include "../include/rri_algo.h"
 
 #include <flint/flint.h>
 #include <flint/fmpq.h>
-#include <flint/fmpz.h>
 #include <flint/fmpz_poly.h>
+#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -75,46 +75,20 @@ cleanup:
   return ret;
 }
 
-int test_subdiv_algo_ext(fmpz_poly_t test_poly, ulong degree) {
+int test_par_subdiv_algo(fmpz_poly_t test_poly, ulong degree, double *time,
+                         int omp_num_threads, int flint_num_threads) {
 
   fmpq_vec_t sol;
   fmpq_vec_init(&sol);
 
-  fmpq_t start, end;
-  fmpq_init(start);
-  fmpq_init(end);
+  double begin = omp_get_wtime();
 
-  fmpq_set_ui(start, 0, 1);
-  fmpq_set_ui(end, 1, 1);
+  par_subdiv_algo(test_poly, &sol, omp_num_threads, flint_num_threads);
 
-  subdiv_algo_ext(test_poly, &sol, start, end);
+  double end = omp_get_wtime();
 
-  if (VERBOSE)
-    printf("number of intervals : %lu\n", sol.size / 2);
-
-  int r = test_root_isolation_intervals(test_poly, sol.data, sol.size);
-
-  fmpq_vec_clear(&sol);
-  fmpq_clear(start);
-  fmpq_clear(end);
-
-  return r;
-}
-
-int test_subdiv_algo(fmpz_poly_t test_poly, ulong degree, double *time) {
-
-  fmpq_vec_t sol;
-  fmpq_vec_init(&sol);
-
-  clock_t begin = clock();
-
-  subdiv_algo(test_poly, &sol);
-
-  clock_t end = clock();
-  double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-  *time = time_spent;
-
-  printf("\e[36mTime : %lfs\n\e[0m", time_spent);
+  printf("\e[36mTime : %lfs\n\e[0m", end - begin);
+  *time = end - begin;
 
   if (VERBOSE)
     printf("number of intervals : %lu\n", sol.size / 2);
@@ -127,9 +101,11 @@ int test_subdiv_algo(fmpz_poly_t test_poly, ulong degree, double *time) {
 }
 
 int main(int argc, char *argv[]) {
-  ulong bits = 8;
+  ulong bits = 64;
   ulong degree = 10;
   int number_of_tests = 100;
+  int omp_num_threads = 0;
+  int flint_num_threads = 0;
   int ok = 1;
   int random = 1;
   char test_poly_str[] = "4  -8 0 106 -52";
@@ -141,6 +117,10 @@ int main(int argc, char *argv[]) {
       degree = strtoul(argv[++i], NULL, 10);
     } else if (strcmp(argv[i], "--tests") == 0 && i + 1 < argc) {
       number_of_tests = atoi(argv[++i]);
+    } else if (strcmp(argv[i], "--threads") == 0 && i + 1 < argc) {
+      omp_num_threads = atoi(argv[++i]);
+    } else if (strcmp(argv[i], "--flint-threads") == 0 && i + 1 < argc) {
+      flint_num_threads = atoi(argv[++i]);
     } else if (strcmp(argv[i], "--random") == 0 && i + 1 < argc) {
       random = atoi(argv[++i]);
     } else if (strcmp(argv[i], "--poly") == 0 && i + 1 < argc) {
@@ -153,10 +133,17 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  if (omp_num_threads < 1)
+    omp_num_threads = omp_get_max_threads();
+  if (flint_num_threads < 1)
+    flint_num_threads = 1;
+
   printf("Configuration:\n");
   printf("  bits   = %lu\n", bits);
   printf("  degree = %lu\n", degree);
   printf("  tests  = %d\n", number_of_tests);
+  printf("  threads = %d\n", omp_num_threads);
+  printf("  flint-threads = %d\n", flint_num_threads);
   printf("  random = %d\n", random);
   if (!random)
     printf("  poly   = %s\n", test_poly_str);
@@ -199,13 +186,13 @@ int main(int argc, char *argv[]) {
     }
 
     printf("= test subdiv =\n");
-    ok = test_subdiv_algo(test_poly, degree, &time_spent);
+    ok = test_par_subdiv_algo(test_poly, degree, &time_spent,
+                              omp_num_threads, flint_num_threads);
     avg_time += time_spent;
   }
-
   avg_time /= number_of_tests;
   printf("\e[36mAverage Time : %lf\e[0m\n", avg_time);
-  if (count == -1)
+  if (number_of_tests == -1)
     printf("\e[32mAll tests passed.\e[0m\n");
 
   // clean up

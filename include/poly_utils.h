@@ -22,4 +22,5 @@ void random_dense_fmpz_poly(fmpz_poly_t poly, flint_rand_t state, slong degree,
                             flint_bitcnt_t bits);
 
 slong fmpq_clog(fmpq_t n, int b);
+
 #endif // POLY_UTILS_H
