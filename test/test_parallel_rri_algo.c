@@ -76,14 +76,14 @@ cleanup:
 }
 
 int test_par_subdiv_algo(fmpz_poly_t test_poly, ulong degree, double *time,
-                         int flint_num_threads) {
+                         int omp_num_threads, int flint_num_threads) {
 
   fmpq_vec_t sol;
   fmpq_vec_init(&sol);
 
   double begin = omp_get_wtime();
 
-  par_subdiv_algo(test_poly, &sol, flint_num_threads);
+  par_subdiv_algo(test_poly, &sol, omp_num_threads, flint_num_threads);
 
   double end = omp_get_wtime();
 
@@ -104,7 +104,8 @@ int main(int argc, char *argv[]) {
   ulong bits = 64;
   ulong degree = 10;
   int number_of_tests = 100;
-  int flint_num_threads = 4;
+  int omp_num_threads = 0;
+  int flint_num_threads = 0;
   int ok = 1;
   int random = 1;
   char test_poly_str[] = "4  -8 0 106 -52";
@@ -117,6 +118,8 @@ int main(int argc, char *argv[]) {
     } else if (strcmp(argv[i], "--tests") == 0 && i + 1 < argc) {
       number_of_tests = atoi(argv[++i]);
     } else if (strcmp(argv[i], "--threads") == 0 && i + 1 < argc) {
+      omp_num_threads = atoi(argv[++i]);
+    } else if (strcmp(argv[i], "--flint-threads") == 0 && i + 1 < argc) {
       flint_num_threads = atoi(argv[++i]);
     } else if (strcmp(argv[i], "--random") == 0 && i + 1 < argc) {
       random = atoi(argv[++i]);
@@ -130,11 +133,17 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  if (omp_num_threads < 1)
+    omp_num_threads = omp_get_max_threads();
+  if (flint_num_threads < 1)
+    flint_num_threads = 1;
+
   printf("Configuration:\n");
   printf("  bits   = %lu\n", bits);
   printf("  degree = %lu\n", degree);
   printf("  tests  = %d\n", number_of_tests);
-  printf("  threads = %d\n", flint_num_threads);
+  printf("  threads = %d\n", omp_num_threads);
+  printf("  flint-threads = %d\n", flint_num_threads);
   printf("  random = %d\n", random);
   if (!random)
     printf("  poly   = %s\n", test_poly_str);
@@ -178,7 +187,7 @@ int main(int argc, char *argv[]) {
 
     printf("= test subdiv =\n");
     ok = test_par_subdiv_algo(test_poly, degree, &time_spent,
-                              flint_num_threads);
+                              omp_num_threads, flint_num_threads);
     avg_time += time_spent;
   }
   avg_time /= number_of_tests;

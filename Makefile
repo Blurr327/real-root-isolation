@@ -5,7 +5,8 @@ OBJ_DIR = obj
 INC_DIR = include
 
 CC = gcc -fopenmp
-CFLAGS = -I$(INC_DIR) -g
+OPTFLAGS ?= -O3 -march=native
+CFLAGS = -I$(INC_DIR) -g $(OPTFLAGS)
 LDFLAGS = -lm -lgmp -lflint
 
 SRC = $(wildcard $(SRC_DIR)/*.c)
