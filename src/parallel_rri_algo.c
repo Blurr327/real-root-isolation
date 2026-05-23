@@ -82,8 +82,8 @@ cleanup:
   fmpz_poly_clear(tmp_poly);
 }
 
-void par_subdiv_algo(fmpz_poly_t in_poly, fmpq_vec_t *sol) {
-  int flint_num_threads = 4;
+void par_subdiv_algo(fmpz_poly_t in_poly, fmpq_vec_t *sol,
+                     int flint_num_threads) {
   fmpq_t bound;
   fmpq_t start, end;
   fmpz_poly_t tmp_poly;

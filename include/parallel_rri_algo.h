@@ -9,6 +9,7 @@
 void par_subdiv_algo_ext(fmpz_poly_t in_poly, fmpq_vec_t *sol, fmpq_t start,
                          fmpq_t end, int depth);
 
-void par_subdiv_algo(fmpz_poly_t in_poly, fmpq_vec_t *sol);
+void par_subdiv_algo(fmpz_poly_t in_poly, fmpq_vec_t *sol,
+                     int flint_num_threads);
 
 #endif
